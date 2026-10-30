@@ -1,0 +1,9 @@
+# Machine-local Composer home used by the development metadata bridge.
+.local/
+
+# Editor and OS noise.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

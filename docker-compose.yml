@@ -1,0 +1,27 @@
+# PostgreSQL 17 for staging/production parity. Local development and tests use
+# SQLite; see wedding-platform-blueprint/docs/adr/005-sqlite-local-postgres-production.md.
+#
+# Credentials below are local-only defaults. Override them via environment
+# variables or a .env file that is never committed.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: undangan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-undangan}
+      POSTGRES_USER: ${DB_USERNAME:-undangan}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-undangan_local}
+      TZ: UTC
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-undangan} -d ${DB_DATABASE:-undangan}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

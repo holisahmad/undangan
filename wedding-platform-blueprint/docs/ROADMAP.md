@@ -1,0 +1,126 @@
+# Implementation Roadmap
+
+## Prinsip
+
+Roadmap adalah urutan validasi dan delivery, bukan alasan membangun semua modul sekaligus. Setiap fase harus selesai berdasarkan acceptance criteria. Durasi adalah estimasi awal untuk tim kecil dan perlu disesuaikan setelah audit repo.
+
+## Phase 0 — Discovery & business validation (minggu 1–2)
+- Wawancara calon pelanggan.
+- Riset pesaing, harga, dan fitur.
+- Pilih segmen awal.
+- Validasi positioning dan paket.
+- Estimasi biaya storage, bandwidth, payment, dan support.
+- Definisikan KPI baseline.
+
+Deliverables: `BUSINESS_MODEL.md` final, scope MVP, pricing hypothesis, riset dan keputusan.
+
+Exit criteria: target pelanggan dan masalah utama jelas; asumsi yang belum terbukti ditandai.
+
+## Phase 1 — Architecture & UX (minggu 3–4)
+- Audit repository dan kemampuan tim.
+- Finalisasi stack melalui ADR.
+- ERD dan state transitions.
+- Wireframe dan design system.
+- Prototype alur pembuatan undangan.
+- Threat model dan kebijakan masa aktif.
+
+Exit criteria: prototype dapat diuji; data model dan kontrak utama disepakati.
+
+## Phase 2 — Core invitation MVP (minggu 5–8)
+- Auth dan dashboard.
+- Wedding/event CRUD.
+- Template registry dan 3–5 template.
+- Editor draft.
+- Preview.
+- Publication snapshots.
+- Public invitation route.
+- Masa aktif dasar.
+- Admin dasar.
+- Automated tests.
+
+Exit criteria:
+- Pengguna dapat membuat, preview, dan publish.
+- Draft tidak mengubah publikasi aktif sebelum publish.
+- Tenant isolation test lulus.
+- Halaman publik mobile-friendly.
+
+## Phase 3 — Orders and payments (minggu 9–10)
+- Product/plan configuration.
+- Orders and order items.
+- Payment sandbox integration.
+- Verified webhook and idempotency.
+- Entitlements.
+- Customer payment status.
+- Transaction notifications.
+
+Exit criteria:
+- Tidak ada aktivasi dari redirect frontend saja.
+- Duplicate webhook tidak menggandakan layanan.
+- Amount/currency diverifikasi.
+
+## Phase 4 — Guests and RSVP (minggu 11–12)
+- Guest CRUD.
+- CSV import/export.
+- Grouping.
+- Personal links and token revocation.
+- RSVP.
+- Guestbook/moderation jika masuk scope.
+- Basic analytics.
+
+Exit criteria:
+- Token dan data tamu terlindungi.
+- RSVP mematuhi party-size limit.
+- CSV errors mudah dipahami.
+
+## Phase 5 — Gallery and archive (minggu 13–14)
+- Object storage adapter.
+- Signed upload/download.
+- Media validation and processing.
+- Albums and previews.
+- Quota enforcement.
+- Archive jobs and temporary ZIP.
+- Retention and cleanup.
+- Storage reconciliation.
+
+Exit criteria:
+- Upload, download, quota, dan retention tests lulus.
+- Job gagal terlihat dan dapat diulang.
+- File tidak dapat diakses lintas wedding.
+
+## Phase 6 — Beta and launch hardening (minggu 15–16)
+- End-to-end tests.
+- Security review.
+- Performance checks.
+- Backup/restore drill.
+- Mobile/browser QA.
+- Pilot pelanggan.
+- Perbaikan bug.
+- Support and incident playbook.
+
+Exit criteria:
+- Tidak ada blocker keamanan atau pembayaran.
+- Backup restore teruji.
+- Monitoring aktif.
+- Proses support dan retensi jelas.
+
+## Phase 7 — Growth based on evidence
+- Guest photo contributions.
+- WhatsApp Business integration.
+- Custom domain.
+- Partner portal.
+- Referral.
+- Advanced analytics.
+- Additional templates.
+- Multi-language.
+
+Prioritaskan berdasarkan data pelanggan, margin, dan beban operasional.
+
+## Sprint protocol
+Untuk setiap sprint:
+1. Pilih scope kecil.
+2. Tulis acceptance criteria.
+3. Buat perubahan terkecil yang konsisten.
+4. Jalankan tests.
+5. Review security dan migration impact.
+6. Demo hasil.
+7. Update status dan dokumentasi.
