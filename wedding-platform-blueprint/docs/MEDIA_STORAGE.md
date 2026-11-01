@@ -1,5 +1,7 @@
 # Media Storage, Gallery & Archive
 
+> **Status implementasi (2026-10-30).** Alur di bagian 2 menjelaskan target presigned upload ke object storage + worker. Implementasi saat ini berbeda: unggahan dikirim ke aplikasi (adapter S3 belum terpasang), pemrosesan dan pembuatan arsip berjalan sinkron, dan build PHP di mesin ini hanya menghasilkan render PNG. Foto tanpa album tidak pernah tampil publik. Rincian keputusan dan konsekuensinya ada di `adr/009-media-storage-and-archive.md`; bukti test ada di `PHASE_5_7_REPORT.md`. Bagian lain dokumen ini tetap menjadi acuan kebijakan.
+
 ## 1. Prinsip
 
 - Database menyimpan metadata; object storage menyimpan file.
@@ -100,3 +102,41 @@ Job berkala:
 - ZIP hanya berisi media yang berhak diakses.
 - Job gagal dapat diulang tanpa membuat arsip tak terkendali.
 - Retensi tidak menghapus file sebelum waktunya.
+
+## 10. Batas unggahan dan konfigurasi server
+
+PHP dapat menolak unggahan sebelum aplikasi berjalan: badan request yang melebihi `post_max_size` dihentikan dengan `PostTooLargeException` (HTTP 413), dan satu berkas yang melebihi `upload_max_filesize` dibuang tanpa pesan. Karena itu batas yang ditampilkan ke pelanggan tidak boleh berasal dari config saja.
+
+- `App\Support\Media\UploadLimits` menghitung batas efektif = nilai terendah antara `config/platform.php` (`MEDIA_MAX_FILE_KB`, `MEDIA_MAX_UPLOAD_KB`, `MEDIA_MAX_FILES_PER_UPLOAD`) dan `upload_max_filesize`/`post_max_size` milik host, dengan margin 512 KB di bawah `post_max_size` untuk boundary multipart dan field formulir.
+- `StoreMediaRequest` memakai angka yang sama untuk aturan `max:` per berkas dan untuk pemeriksaan total ukuran satu kirim, sehingga pesan validasi menyebut angka yang benar.
+- Halaman galeri menampilkan batas efektif dan memberi catatan bahwa angkanya mengikuti server bila PHP lebih ketat; formulir membawa batas tersebut (`data-max-file-bytes`, `data-max-total-bytes`) agar `resources/js/app.js` dapat menolak kombinasi yang terlalu besar sebelum dikirim dan menyebut foto mana yang harus dibuang.
+- Permintaan yang tetap terlalu besar dijawab `resources/views/errors/413.blade.php`: halaman mandiri tanpa sesi maupun layout, memuat batas yang berlaku, saran memecah unggahan, dan tautan kembali. Setiap kejadian dicatat sebagai `request.post_too_large` beserta `content_length`, `post_max_size`, dan `upload_max_filesize`.
+- `MEDIA_RESPECT_PHP_LIMITS=false` hanya untuk pengujian; produksi harus membiarkannya `true` agar formulir tidak menjanjikan ukuran yang akan ditolak host.
+
+Nilai server yang disarankan (sesuaikan dengan paket terbesar):
+
+```ini
+; php.ini (FPM dan CLI)
+upload_max_filesize = 16M
+post_max_size = 48M
+memory_limit = 256M
+max_file_uploads = 20
+max_execution_time = 120
+```
+
+```nginx
+# nginx: harus >= post_max_size
+client_max_body_size 48m;
+```
+
+- Batas per foto 8 MB dengan 10 foto satu kirim membutuhkan ruang ±80 MB; bila host tidak dapat menyediakan, turunkan `MEDIA_MAX_UPLOAD_KB` (mis. 24 MB) dan biarkan pelanggan mengunggah beberapa kali.
+- Pemrosesan GD berjalan sinkron; `memory_limit` minimal 256 MB disarankan untuk foto 12 MP.
+
+Saat badan request melebihi `post_max_size`, PHP sudah mencetak warning `POST Content-Length of ... exceeds the limit ...` pada request startup — sebelum Laravel berjalan. Dengan `display_errors=Off` (default produksi) warning itu hanya masuk log dan halaman 413 terkirim dengan status yang benar. Bila `display_errors` menyala (umum di server pengembangan), warning tersebut dikirim lebih dulu, header terlanjur terkirim, dan halaman yang sama tiba sebagai status 200 dengan warning di atasnya; isi halaman tetap benar, jadi angkat ke produksi dengan `display_errors=Off`.
+
+Pengujian tambahan pada bagian 9:
+
+- Foto di atas batas efektif ditolak dengan pesan yang menyebut angka batas.
+- Gabungan beberapa foto melebihi batas satu kirim ditolak sebelum ada baris `media_assets` dibuat.
+- Halaman galeri menampilkan batas efektif dan formulir membawa batas yang sama untuk pemeriksaan di browser.
+- Halaman 413 dapat dirender tanpa sesi dan menyebut batas per foto, jumlah, dan total.

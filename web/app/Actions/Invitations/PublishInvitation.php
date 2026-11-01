@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Invitations;
 
+use App\Actions\Analytics\TrackEvent;
 use App\Enums\WeddingLifecycleStatus;
 use App\Exceptions\InvitationNotPublishable;
+use App\Models\AnalyticsEvent;
 use App\Models\InvitationDraft;
 use App\Models\InvitationPublication;
 use App\Models\User;
 use App\Models\Wedding;
 use App\Support\Audit\AuditLogger;
+use App\Support\Billing\TemplateAccess;
 use App\Support\Invitations\InvitationSnapshot;
 use App\Support\Templates\InvitationContentValidator;
+use App\Support\Templates\TemplatePresentation;
 use App\Support\Templates\TemplateRegistry;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +35,8 @@ final class PublishInvitation
         private readonly InvitationContentValidator $validator,
         private readonly TemplateRegistry $registry,
         private readonly AuditLogger $audit,
+        private readonly TrackEvent $track,
+        private readonly TemplateAccess $access,
     ) {}
 
     public function handle(Wedding $wedding, User $actor): InvitationPublication
@@ -57,11 +63,22 @@ final class PublishInvitation
             throw InvitationNotPublishable::missingEntitlement();
         }
 
+        // The ceiling stored on the entitlement, never the plan catalogue: a
+        // package whose template access changed later must not retract a design
+        // the owner already bought (docs/BUSINESS_MODEL.md).
+        $template = $templateVersion->template;
+        $frozen = $entitlement->limits_json['features'] ?? null;
+
+        if ($template !== null
+            && ! $this->access->allows($this->access->ceilingFrom(is_array($frozen) ? $frozen : null), $template)) {
+            throw InvitationNotPublishable::templateNotInPlan(TemplatePresentation::tierLabel($template->tier));
+        }
+
         $publishedAt = now();
         $expiresAt = $entitlement->expires_at;
         $snapshot = $this->snapshot->build($wedding, $draft, $templateVersion, $publishedAt, $expiresAt);
 
-        return DB::transaction(function () use ($wedding, $actor, $snapshot, $publishedAt, $expiresAt): InvitationPublication {
+        $publication = DB::transaction(function () use ($wedding, $actor, $snapshot, $publishedAt, $expiresAt): InvitationPublication {
             $versionNumber = ((int) $wedding->publications()->max('version_number')) + 1;
 
             $publication = InvitationPublication::create([
@@ -89,6 +106,12 @@ final class PublishInvitation
 
             return $publication;
         });
+
+        // Recorded after the transaction so a rollback never inflates the
+        // funnel (docs/PRIVACY_AND_RETENTION.md).
+        $this->track->handle(AnalyticsEvent::INVITATION_PUBLISHED, $wedding);
+
+        return $publication;
     }
 
     private function assertContentIsComplete(Wedding $wedding, InvitationDraft $draft): void

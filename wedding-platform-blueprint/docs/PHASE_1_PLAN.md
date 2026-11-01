@@ -147,7 +147,7 @@ $env:EXPECTED_DB_DRIVER='pgsql';  php artisan test --filter=DatabaseDriverTest
 7. **Tidak ada Livewire/SPA**; state publikasi dikelola server agar mudah diuji dan diaudit.
 8. **Pint** memformat ulang line ending dan beberapa file skeleton (`bootstrap/providers.php`, `config/auth.php`, `database/factories/UserFactory.php`); tidak ada perubahan perilaku.
 9. **Preview** memakai renderer yang sama dengan halaman publik, dengan banner khusus; tidak dapat diakses tanpa login dan otorisasi.
-10. **CI** ditulis di `.github/workflows/ci.yml` (quality, tests-sqlite, tests-postgres) tetapi **belum pernah dieksekusi**: workspace belum berupa repositori git dan Docker tidak tersedia di mesin ini. YAML divalidasi dengan parser, bukan dengan menjalankan workflow.
+10. **CI** ditulis di `.github/workflows/ci.yml` (quality, tests-sqlite, tests-postgres) dan repositori lokal sudah diinisialisasi (`git init`, cabang `main`, satu commit baseline), tetapi workflow **belum pernah dieksekusi**: belum ada remote dan Docker tidak tersedia di mesin ini. YAML divalidasi dengan parser, bukan dengan menjalankan workflow.
 11. **Guard driver database** (`DatabaseDriverTest`) membaca `EXPECTED_DB_DRIVER`; nilainya kosong di lokal sehingga test di-skip, dan diisi oleh workflow CI. Tujuannya mencegah job PostgreSQL diam-diam menguji SQLite karena `phpunit.xml` menetapkan `DB_CONNECTION=sqlite`.
 
 ## 6. Risiko & pekerjaan tersisa
@@ -162,8 +162,8 @@ $env:EXPECTED_DB_DRIVER='pgsql';  php artisan test --filter=DatabaseDriverTest
 
 ## 7. Langkah berikutnya (usulan, butuh persetujuan)
 
-1. ~~CI: Pint check + PHPUnit (SQLite dan PostgreSQL service) + `composer audit` + `npm run build`.~~ Ditulis di `.github/workflows/ci.yml`; tinggal dijalankan pada repositori git (perlu `git init` + remote).
-2. Fase order/pembayaran: order, order item, webhook idempoten, entitlement otomatis, audit admin.
+1. ~~CI: Pint check + PHPUnit (SQLite dan PostgreSQL service) + `composer audit` + `npm run build`.~~ Ditulis di `.github/workflows/ci.yml`; repositori git lokal sudah dibuat, tinggal menambah remote agar workflow berjalan.
+2. ~~Fase order/pembayaran: order, order item, webhook idempoten, entitlement otomatis, audit admin.~~ Selesai — lihat `PHASE_2_3_REPORT.md` dan `adr/007-orders-and-payments.md`.
 3. Guest management: daftar tamu, impor CSV aman, tautan personal, RSVP, ucapan.
 4. Media: upload intent, storage object, signed URL, kuota, retensi.
-5. Admin minimum: daftar wedding, lifecycle override, audit log viewer.
+5. ~~Admin minimum: daftar wedding, lifecycle override, audit log viewer.~~ Selesai — lihat `PHASE_2_3_REPORT.md`.

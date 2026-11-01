@@ -1,0 +1,26 @@
+# Local dev files
+.env
+.env.*
+!.env.example
+
+# SQLite database (Railway will use ephemeral or persistent volume)
+database/database.sqlite
+database/*.sqlite
+
+# Local storage / uploads
+storage/app/public/*
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Node modules (rebuilt on Railway)
+node_modules/
+
+# Test artifacts
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+

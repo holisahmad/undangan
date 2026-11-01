@@ -62,18 +62,36 @@ Endpoint publik harus membatasi field output, menerapkan rate limit, dan tidak m
 
 ## 6. Orders / payments
 
-- `POST /orders`
+- `POST /weddings/{wedding}/orders`
+- `GET /orders`
 - `GET /orders/{id}`
 - `POST /orders/{id}/checkout`
-- `GET /orders/{id}/status`
-- `POST /webhooks/payments/{provider}`
+- `GET /checkout/transfer/{order}` — instruksi transfer bank dan hitung mundur
+- `POST /orders/{order}/payment-confirmation` — unggah bukti transfer (multipart)
+- `POST /orders/{order}/payment-code` — buat ulang kode 3 digit setelah kedaluwarsa
+- `POST /webhooks/payments/{provider}` — hanya untuk gateway provider/sandbox
 
-Webhook:
+Alur default adalah transfer bank manual, bukan redirect provider (lihat `docs/PAYMENT_FLOW.md`):
+
+- `checkout` membuat satu percobaan pembayaran berstatus `pending` dan mengembalikan redirect ke halaman instruksi.
+- `payment-confirmation` menerima `sender_name`, `sender_bank`, `transferred_at`, `amount`, `note`, `proof`; `amount` harus sama dengan total tagihan termasuk kode unik.
+- Konfirmasi hanya membuat baris `payment_confirmations` berstatus `submitted`; tidak pernah mengubah status order menjadi lunas.
+- `payment-code` hanya berhasil bila jendela sebelumnya sudah tertutup.
+
+Webhook (bila gateway provider dipakai):
 - Verifikasi signature sesuai provider.
 - Simpan event ID unik.
 - Idempotent terhadap event duplikat.
 - Jangan mengaktifkan entitlement dari query parameter browser.
 - Hindari mengembalikan detail internal pada response error.
+
+Endpoint admin terkait:
+
+- `GET /admin/orders` — ledger + antrean verifikasi
+- `GET /admin/orders/{order}` — detail pesanan dan bukti transfer
+- `POST /admin/orders/{order}/verify`
+- `POST /admin/orders/{order}/reject` (wajib `review_note`)
+- `GET /admin/orders/{order}/proofs/{confirmation}` — unduh bukti, tercatat di audit log
 
 ## 7. Guests
 

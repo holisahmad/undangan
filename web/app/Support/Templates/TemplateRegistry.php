@@ -18,6 +18,18 @@ final class TemplateRegistry
      */
     private const RENDERERS = [
         'classic-ivory.v1' => 'invitations.templates.classic-ivory',
+        'modern-editorial.v1' => 'invitations.templates.modern-editorial',
+        'garden-botanical.v1' => 'invitations.templates.garden-botanical',
+        'emerald-gilded.v1' => 'invitations.templates.emerald-gilded',
+        'sage-keepsake.v1' => 'invitations.templates.sage-keepsake',
+        'batik-pusaka.v1' => 'invitations.templates.batik-pusaka',
+        'midnight-celestial.v1' => 'invitations.templates.midnight-celestial',
+        'terracotta-sunset.v1' => 'invitations.templates.terracotta-sunset',
+        'glasshouse-minimal.v1' => 'invitations.templates.glasshouse-minimal',
+        'pesisir-senja.v1' => 'invitations.templates.pesisir-senja',
+        'songket-empress.v1' => 'invitations.templates.songket-empress',
+        'velvet-royal.v1' => 'invitations.templates.velvet-royal',
+        'deco-noir.v1' => 'invitations.templates.deco-noir',
     ];
 
     public function viewFor(string $rendererKey): string

@@ -169,7 +169,10 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Production defaults to Secure cookies so a missing environment variable
+    // cannot leak a session over plain HTTP (docs/DEPLOYMENT.md). Local
+    // development can opt out explicitly with SESSION_SECURE_COOKIE=false.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV', 'production') === 'production'),
 
     /*
     |--------------------------------------------------------------------------

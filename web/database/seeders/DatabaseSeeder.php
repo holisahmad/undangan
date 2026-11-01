@@ -14,7 +14,10 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $this->call(TemplateSeeder::class);
+        $this->call([
+            TemplateSeeder::class,
+            PlanSeeder::class,
+        ]);
 
         // Demo credentials are only created on local machines. Production
         // accounts are never seeded (docs/SECURITY.md, section 6).

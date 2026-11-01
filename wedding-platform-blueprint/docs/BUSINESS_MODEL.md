@@ -15,11 +15,12 @@ Jangan menganggap semua segmen memiliki kebutuhan dan willingness-to-pay yang sa
 ## 3. Model pendapatan
 
 - Paket undangan sekali bayar.
+- Desain template bertingkat sebagai pembeda paket: tema `essential` terbuka di semua paket, tema `signature` dan `premium` hanya dapat dipakai (dan diterbitkan) oleh paket yang membukanya — ditegakkan sistem, bukan hanya ditulis di tabel harga (ADR-014).
 - Add-on RSVP/guest management jika tidak termasuk paket.
 - Add-on galeri dan kapasitas storage.
 - Perpanjangan masa aktif undangan.
 - Perpanjangan akses galeri/arsip.
-- Paket mitra dan referral di fase lanjutan.
+- Paket mitra dan referral di fase lanjutan. Sampai kontrak itu ada, layanan pelaminan (rias, dekorasi, dokumentasi, WO, cetak) ditampilkan di beranda sebagai kerja mitra tanpa harga dan tanpa tombol pesan; yang dihasilkan hanyalah lead yang sudah menyebut layanan yang ditanyakan (ADR-015).
 
 ## 4. Harga ilustratif untuk eksperimen
 
@@ -55,7 +56,7 @@ Jangan menghitung omzet sebagai laba. Biaya tenaga kerja, operasional, pajak, re
 
 ## 6. Kanal akuisisi
 
-- SEO berbasis intent dan template.
+- SEO berbasis intent dan template. Halaman katalog `/tema` (difilter per kategori dan paket, berpaginasi, `CollectionPage` + `ItemList`) serta satu halaman contoh per tema adalah pintu masuk yang dapat diindeks; beranda hanya menampilkan strip terkurasi agar tidak memanjang setiap kali desain bertambah.
 - Konten edukasi calon pengantin.
 - Instagram/TikTok/Pinterest sesuai kemampuan produksi konten.
 - Referral pelanggan.
@@ -78,3 +79,6 @@ Jangan menghitung omzet sebagai laba. Biaya tenaga kerja, operasional, pajak, re
 - Tidak ada klaim “selamanya” kecuali bisnis dapat memenuhi janji itu secara berkelanjutan.
 - Perpanjangan tidak boleh menghapus atau mengubah data secara diam-diam.
 - Biaya tambahan harus dijelaskan sebelum pelanggan membayar.
+- Tingkat template adalah batas pemakaian, bukan label harga: nama paket, harga, dan kuota tinggal di `plans`/`plan_features`, sedangkan `invitation_templates.tier` hanya menentukan desain mana yang boleh dipilih dan diterbitkan.
+- Plafon desain dibekukan pada saat pesanan. Perubahan isi paket berikutnya tidak boleh mencabut tema yang sudah dibeli pelanggan, dan pemberian manual/support tanpa fitur beku dibaca sebagai plafon tertinggi.
+- Tema yang belum terbuka tetap ditampilkan, bukan disembunyikan: katalog justru perlu menunjukkan apa yang belum dimiliki pelanggan, lengkap dengan paket pembukanya.

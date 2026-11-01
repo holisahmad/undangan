@@ -3,21 +3,28 @@
 ## 1. Website marketing
 
 Flow:
-1. Landing page.
-2. Jelajahi template.
-3. Buka detail dan preview.
-4. Bandingkan paket.
-5. Daftar/login.
-6. Buat draft atau checkout sesuai strategi produk.
-7. Selesaikan pembayaran.
-8. Kembali ke dashboard.
+1. Landing page: hero, angka nyata, grid fitur, strip contoh tema (terkurasi), blok layanan pelaminan, harga, tiga langkah, testimoni, FAQ, kontak.
+2. Jelajahi template di `/tema`: filter kategori + paket, grid kartu, lalu "Tampilkan lebih banyak tema" (halaman berikutnya; tanpa JavaScript menjadi tautan biasa).
+3. Buka detail dan preview — setiap kartu menautkan halaman contoh yang memakai data terbit yang sama dengan yang dilihat tamu.
+4. Bandingkan paket; kartu tema eksklusif menyebut paket pembukanya, bukan sekadar bertanda "premium".
+5. Tanya layanan non-undangan lewat kartu mitra → form kontak dengan minat layanan yang sudah terisi (`?layanan=`).
+6. Daftar/login.
+7. Buat draft atau checkout sesuai strategi produk.
+8. Selesaikan pembayaran.
+9. Kembali ke dashboard.
 
 CTA utama harus konsisten. Jangan memaksa login sebelum pengguna dapat menilai contoh desain jika preview publik aman untuk ditampilkan.
+
+Identitas merek pada alur ini:
+
+- Header menampilkan emblem berdampingan dengan nama merek; footer menampilkan tagline dan kredit pembangun. Sumbernya `APP_NAME`, `config('site.tagline')`, dan `config('site.credit')`, bukan teks di dalam view.
+- Setiap halaman pemasaran membawa ikon, manifest, `theme-color`, dan `og:image` dari `partials/brand-head.blade.php`, sehingga tautan yang dikirim lewat WhatsApp tampil dengan identitas yang sama (lihat `adr/013-brand-identity-and-icon-set.md`).
+- Navigasi dan footer menambah tautan `Tema` (katalog) dan `Layanan`; tautan `Layanan` hanya muncul bila `config('site.services')` masih berisi mitra, dan jam promo hanya muncul bila `site.promo.ends_at` punya tenggat nyata (`adr/014-theme-catalogue-and-package-tiers.md`, `adr/015-landing-services-and-honest-numbers.md`).
 
 ## 2. Pembuatan undangan
 
 Wizard:
-1. Pilih template.
+1. Pilih template — pada halaman pembuatan seluruh tema yang terbit ditawarkan (belum ada yang dibayar), lengkap dengan badge, kategori, dan label paket pembuka tema eksklusif.
 2. Isi data mempelai.
 3. Tambahkan acara (akad, resepsi, atau acara lain).
 4. Unggah foto.
@@ -35,6 +42,7 @@ Persyaratan:
 - Error tidak menghapus input yang sudah valid.
 - Perubahan draft tidak mengubah publikasi hingga publish dilakukan.
 - Jika entitlement tidak valid, jelaskan tindakan yang dapat dilakukan.
+- Tema di atas plafon paket pemilik tetap tampil di pemilih editor, tetapi non-aktif dengan nama paket yang membukanya; draf yang sudah memakai tema itu tetap bisa disimpan, dan penolakan terjadi saat terbit dengan kalimat yang menyebut paket yang harus dibeli (ADR-014).
 
 ## 3. Tamu membuka undangan
 

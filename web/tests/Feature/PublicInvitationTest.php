@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\InvitationPublication;
+use App\Models\MediaAlbum;
+use App\Models\MediaAsset;
 use App\Models\Wedding;
 use Database\Seeders\TemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -74,6 +76,43 @@ final class PublicInvitationTest extends TestCase
         $this->get(route('invitations.public', ['slug' => $wedding->slug]))
             ->assertStatus(410)
             ->assertSee('Undangan sedang tidak ditampilkan');
+    }
+
+    public function test_the_public_page_exposes_share_metadata(): void
+    {
+        $wedding = Wedding::factory()->published()->create();
+        InvitationPublication::factory()->for($wedding)->create();
+
+        $this->get(route('invitations.public', ['slug' => $wedding->slug]))
+            ->assertOk()
+            ->assertSee('<meta name="description"', false)
+            ->assertSee('<meta property="og:title" content="Ayu &amp; Bima">', false)
+            ->assertSee('<meta name="robots" content="noindex,nofollow">', false);
+    }
+
+    public function test_the_public_page_hides_the_rsvp_form_and_links_only_public_galleries(): void
+    {
+        $wedding = Wedding::factory()->published()->create();
+        InvitationPublication::factory()->for($wedding)->create();
+        $url = route('invitations.public', ['slug' => $wedding->slug]);
+
+        $this->get($url)
+            ->assertOk()
+            ->assertDontSee('Konfirmasi kehadiran')
+            ->assertDontSee('Lihat galeri foto');
+
+        $private = MediaAlbum::factory()->for($wedding)->create();
+        MediaAsset::factory()->for($wedding)->create(['album_id' => $private->getKey()]);
+
+        $this->get($url)->assertOk()->assertDontSee('Lihat galeri foto');
+
+        $public = MediaAlbum::factory()->for($wedding)->public()->create();
+        MediaAsset::factory()->for($wedding)->create(['album_id' => $public->getKey()]);
+
+        $this->get($url)
+            ->assertOk()
+            ->assertSee('Lihat galeri foto')
+            ->assertSee(route('invitations.gallery', ['slug' => $wedding->slug]), false);
     }
 
     public function test_the_public_page_is_rate_limited_per_ip(): void

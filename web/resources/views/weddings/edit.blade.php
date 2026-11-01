@@ -37,12 +37,12 @@
                 <form method="POST" action="{{ route('weddings.update', $wedding) }}" class="mt-3 flex flex-wrap items-end gap-3">
                     @csrf
                     @method('PATCH')
-                    <div class="min-w-[16rem] flex-1">
+                    <div class="w-full flex-1 sm:min-w-[16rem]">
                         <label for="internal_title" class="{{ $labelClass }}">Nama internal</label>
                         <input id="internal_title" name="internal_title" type="text" required maxlength="160"
                                value="{{ old('internal_title', $wedding->internal_title) }}" class="{{ $inputClass }}">
                     </div>
-                    <button type="submit" class="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium hover:border-stone-400">
+                    <button type="submit" class="rounded-md border border-stone-300 bg-white px-4 py-2.5 text-sm font-medium hover:border-stone-400 sm:py-2">
                         Simpan nama
                     </button>
                 </form>
@@ -147,20 +147,44 @@
                     Teks di bawah ini hanya tampil di halaman publik setelah diterbitkan ulang.
                 </p>
 
-                <form method="POST" action="{{ route('weddings.draft.update', $wedding) }}" class="mt-4 space-y-4">
+                <form method="POST" action="{{ route('weddings.draft.update', $wedding) }}"
+                      data-autosave-url="{{ route('weddings.draft.update', $wedding) }}"
+                      data-autosave-status="#draft-save-status"
+                      class="mt-4 space-y-4">
                     @csrf
                     @method('PUT')
+
+                    @php
+                        $draftVersion = (string) ($draft?->template_version_id ?? '');
+                        $draftLock = $locked[$draftVersion] ?? null;
+                    @endphp
 
                     <div>
                         <label for="template_version_id" class="{{ $labelClass }}">Template</label>
                         <select id="template_version_id" name="template_version_id" class="{{ $inputClass }}">
                             @foreach ($templates as $version)
+                                @php $lock = $locked[(string) $version->getKey()] ?? null; @endphp
                                 <option value="{{ $version->getKey() }}"
+                                    @disabled($lock !== null)
                                     @selected(old('template_version_id', $draft?->template_version_id) === $version->getKey())>
-                                    {{ $version->template->name }} (versi {{ $version->version }})
+                                    {{ $version->template->name }} (versi {{ $version->version }}){{ $lock === null ? '' : ' — '.$lock }}
                                 </option>
                             @endforeach
                         </select>
+                        @if ($locked !== [])
+                            <p class="mt-1 text-xs text-stone-500">
+                                Tema bertanda paket dapat dilihat sebagai contoh, tetapi baru bisa dipilih setelah paket
+                                tersebut aktif pada pesanan Anda.
+                            </p>
+                        @endif
+                        @if ($draftLock !== null)
+                            {{-- The draft keeps its design because it was chosen while the choice was
+                                 free; only publication refuses it (PublishInvitation). --}}
+                            <div class="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                                Tema draf ini hanya tersedia pada {{ $draftLock }}. Isi undangan tetap bisa disunting,
+                                tetapi terbitkan ulang setelah paket yang sesuai aktif, atau ganti tema terlebih dahulu.
+                            </div>
+                        @endif
                     </div>
 
                     <div>
@@ -206,7 +230,7 @@
 
                     <fieldset class="rounded-md border border-stone-200 p-3">
                         <legend class="px-1 text-sm font-medium">Bagian yang ditampilkan</legend>
-                        @foreach (['show_story' => 'Cerita', 'show_events' => 'Acara', 'show_map' => 'Peta'] as $key => $label)
+                        @foreach (['show_story' => 'Cerita', 'show_events' => 'Acara', 'show_map' => 'Peta', 'show_gift' => 'Hadiah'] as $key => $label)
                             <label class="mt-2 flex items-center gap-2 text-sm">
                                 <input type="hidden" name="content[features][{{ $key }}]" value="0">
                                 <input type="checkbox" name="content[features][{{ $key }}]" value="1"
@@ -217,9 +241,67 @@
                         @endforeach
                     </fieldset>
 
-                    <button type="submit" class="rounded-md bg-rose-800 px-4 py-2 text-sm font-medium text-white hover:bg-rose-900">
-                        Simpan draft
-                    </button>
+                    <fieldset class="rounded-md border border-stone-200 p-3">
+                        <legend class="px-1 text-sm font-medium">Hadiah pernikahan</legend>
+                        <p class="mt-1 text-xs text-stone-600">
+                            Rekening dan alamat kado hanya tampil setelah diterbitkan ulang. Baris yang nomornya
+                            kosong diabaikan.
+                        </p>
+
+                        <label class="mt-3 flex items-center gap-2 text-sm">
+                            <input type="hidden" name="content[gift][enabled]" value="0">
+                            <input type="checkbox" name="content[gift][enabled]" value="1"
+                                   @checked((string) old('content.gift.enabled', data_get($content, 'gift.enabled', true)) === '1')
+                                   class="rounded border-stone-300 text-rose-800 focus:ring-rose-700">
+                            Tampilkan bagian hadiah
+                        </label>
+
+                        @for ($index = 0; $index < 2; $index++)
+                            <div class="mt-3 grid gap-3 rounded-md border border-dashed border-stone-300 p-3 sm:grid-cols-3">
+                                <div>
+                                    <label for="gift_bank_{{ $index }}" class="{{ $labelClass }}">Bank {{ $index + 1 }}</label>
+                                    <input id="gift_bank_{{ $index }}" name="content[gift][accounts][{{ $index }}][bank]" type="text" maxlength="40"
+                                           value="{{ old('content.gift.accounts.' . $index . '.bank', data_get($content, 'gift.accounts.' . $index . '.bank')) }}"
+                                           class="{{ $inputClass }}" placeholder="BCA">
+                                </div>
+                                <div>
+                                    <label for="gift_number_{{ $index }}" class="{{ $labelClass }}">Nomor rekening</label>
+                                    <input id="gift_number_{{ $index }}" name="content[gift][accounts][{{ $index }}][number]" type="text" maxlength="40"
+                                           value="{{ old('content.gift.accounts.' . $index . '.number', data_get($content, 'gift.accounts.' . $index . '.number')) }}"
+                                           class="{{ $inputClass }}" inputmode="numeric" placeholder="1234567890">
+                                </div>
+                                <div>
+                                    <label for="gift_holder_{{ $index }}" class="{{ $labelClass }}">Atas nama</label>
+                                    <input id="gift_holder_{{ $index }}" name="content[gift][accounts][{{ $index }}][holder]" type="text" maxlength="100"
+                                           value="{{ old('content.gift.accounts.' . $index . '.holder', data_get($content, 'gift.accounts.' . $index . '.holder')) }}"
+                                           class="{{ $inputClass }}">
+                                </div>
+                            </div>
+                        @endfor
+
+                        <div class="mt-3 grid gap-3">
+                            <div>
+                                <label for="gift_note" class="{{ $labelClass }}">Catatan (opsional)</label>
+                                <textarea id="gift_note" name="content[gift][note]" rows="2" maxlength="400"
+                                          class="{{ $inputClass }}">{{ old('content.gift.note', data_get($content, 'gift.note')) }}</textarea>
+                            </div>
+                            <div>
+                                <label for="gift_address" class="{{ $labelClass }}">Alamat kirim kado (opsional)</label>
+                                <input id="gift_address" name="content[gift][address]" type="text" maxlength="240"
+                                       value="{{ old('content.gift.address', data_get($content, 'gift.address')) }}"
+                                       class="{{ $inputClass }}">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button type="submit" class="rounded-md bg-rose-800 px-4 py-2 text-sm font-medium text-white hover:bg-rose-900">
+                            Simpan draft
+                        </button>
+                        <p id="draft-save-status" role="status" aria-live="polite" class="text-xs text-stone-500">
+                            Perubahan disimpan otomatis saat Anda berhenti mengetik.
+                        </p>
+                    </div>
                 </form>
             </section>
         </div>

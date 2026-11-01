@@ -1,6 +1,10 @@
 # Machine-local Composer home used by the development metadata bridge.
 .local/
 
+# Design blueprint, product docs and reference assets for development guidance.
+# Not part of the application; kept on disk only.
+wedding-platform-blueprint/
+
 # Editor and OS noise.
 .idea/
 .vscode/

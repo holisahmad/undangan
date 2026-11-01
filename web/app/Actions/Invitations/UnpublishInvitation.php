@@ -14,9 +14,14 @@ final class UnpublishInvitation
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
-    public function handle(Wedding $wedding, User $actor): void
+    /**
+     * @param  string|null  $reason  Set only when an operator suspends the
+     *                               publication on the owner's behalf; it moves
+     *                               the audit action to the admin namespace.
+     */
+    public function handle(Wedding $wedding, User $actor, ?string $reason = null): void
     {
-        DB::transaction(function () use ($wedding, $actor): void {
+        DB::transaction(function () use ($wedding, $actor, $reason): void {
             $now = now();
 
             $affected = $wedding->publications()
@@ -25,12 +30,18 @@ final class UnpublishInvitation
 
             $wedding->update(['lifecycle_status' => WeddingLifecycleStatus::Unpublished]);
 
+            $metadata = ['publications_disabled' => $affected];
+
+            if ($reason !== null) {
+                $metadata['reason'] = $reason;
+            }
+
             $this->audit->log(
-                action: 'invitation.unpublished',
+                action: $reason === null ? 'invitation.unpublished' : 'admin.invitation.suspended',
                 resourceType: 'wedding',
                 resourceId: $wedding->getKey(),
                 actor: $actor,
-                metadata: ['publications_disabled' => $affected],
+                metadata: $metadata,
             );
         });
     }

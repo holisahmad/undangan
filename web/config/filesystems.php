@@ -47,6 +47,18 @@ return [
             'report' => false,
         ],
 
+        'media' => [
+            // Private object storage for gallery originals, previews and
+            // archives. Files are only served through signed routes
+            // (docs/adr/009-media-storage-and-archive.md).
+            'driver' => 'local',
+            'root' => storage_path('app/media'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

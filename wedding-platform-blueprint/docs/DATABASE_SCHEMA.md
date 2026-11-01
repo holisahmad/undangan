@@ -83,10 +83,18 @@ Satu wedding dapat memiliki banyak rangkaian acara. Validasi koordinat dan URL d
 - slug (unique)
 - name
 - category
+- tier (`essential`, `signature`, `premium`) — batas paket yang membuka desain ini
+- badge (`new`, `best`, nullable) — penanda di kartu katalog, bukan pengatur akses
+- sort_order — urutan kurasi katalog; halaman `/tema` dan pemilih tema memakai urutan yang sama
 - status
 - thumbnail_object_key
 - feature_schema
 - created_at, updated_at
+
+Template adalah kode, bukan data: `template_versions.renderer_key` harus ada di
+`App\Support\Templates\TemplateRegistry`. Kolom `tier` hanya menentukan desain mana
+yang boleh dipakai; harga dan nama paket tetap milik `plans`/`plan_features`, supaya
+perubahan katalog tidak pernah mencabut desain yang sudah dibeli pelanggan.
 
 ### template_versions
 - id (PK)
@@ -132,6 +140,13 @@ Snapshot harus memiliki format/version yang dapat dibaca renderer. Tentukan apak
 
 Entitlement adalah hak layanan yang diberikan kepada pelanggan. Kebijakan expiry harus memeriksa entitlement yang tepat, bukan hanya satu tanggal global.
 
+`limits_json.features` membekukan fitur paket saat pesanan dibuat, termasuk
+`template_tier.tier`. Penegakan membaca nilai beku ini, bukan katalog paket yang
+sedang berlaku, dan dilakukan di dua titik: perpindahan tema saat draf disimpan
+(`SaveInvitationDraft`) dan saat penerbitan (`PublishInvitation`). Entitlement tanpa
+`features` (pemberian manual/support) dibaca sebagai plafon tertinggi agar pelanggan
+yang sudah membayar tidak pernah terkunci dari desain miliknya.
+
 ## 5. Produk dan pembayaran
 
 ### products
@@ -153,7 +168,11 @@ Entitlement adalah hak layanan yang diberikan kepada pelanggan. Kebijakan expiry
 - subtotal_amount
 - discount_amount
 - total_amount
+- unique_code (3 digit 100-999, unik di antara order yang jendelanya terbuka)
+- payment_expires_at nullable (batas waktu transfer)
+- paid_at nullable
 - created_at, updated_at
+- index(status, payment_expires_at)
 
 ### order_items
 - id (PK)
@@ -185,6 +204,23 @@ Entitlement adalah hak layanan yang diberikan kepada pelanggan. Kebijakan expiry
 - processing_status
 - safe_payload_reference atau payload teredaksi
 - processed_at nullable
+
+### payment_confirmations
+- id (PK, uuid)
+- order_id (FK)
+- payment_id (FK)
+- submitted_by (FK users)
+- sender_name, sender_bank
+- transferred_at (date)
+- amount (nominal yang diklaim, harus sama dengan orders.total_amount + unique_code)
+- note nullable
+- proof_path, proof_original_name, proof_mime, proof_size (disk privat)
+- status enum: submitted / verified / rejected
+- reviewed_by nullable, reviewed_at nullable, review_note nullable
+- created_at, updated_at
+- index(order_id, status)
+
+`payment_confirmations` menyimpan bukti transfer manual. Berkasnya privat dan hanya dibaca lewat route admin yang mencatat audit.
 
 Jangan simpan data kartu pembayaran sensitif. Hindari menyimpan payload webhook penuh jika mengandung data yang tidak dibutuhkan.
 

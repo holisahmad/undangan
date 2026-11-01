@@ -50,6 +50,20 @@ final class InvitationNotPublishable extends RuntimeException
     }
 
     /**
+     * The theme itself is fine; the package behind the invitation is not. Worded
+     * as an upgrade path because the customer already paid for something and the
+     * design was offered to them while the draft was still free to choose.
+     */
+    public static function templateNotInPlan(string $tierLabel): self
+    {
+        return new self(
+            'Tema ini membutuhkan paket yang lebih tinggi ('.$tierLabel.'). '.
+                'Pesan paket tersebut, atau ganti tema sebelum menerbitkan.',
+            ['template_tier'],
+        );
+    }
+
+    /**
      * @return list<string>
      */
     public function reasons(): array

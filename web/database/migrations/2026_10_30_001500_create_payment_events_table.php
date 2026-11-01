@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('payment_events', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('provider', 40);
+            $table->string('provider_event_id');
+            $table->string('event_type', 40);
+            $table->timestamp('received_at');
+            $table->enum('processing_status', ['received', 'processed', 'ignored', 'failed'])->default('received');
+            // Only sanitised fields are stored; never card data or full provider
+            // payloads (docs/PAYMENT_FLOW.md, section 4).
+            $table->json('payload')->nullable();
+            $table->timestamp('processed_at')->nullable();
+            $table->timestamps();
+
+            $table->unique(['provider', 'provider_event_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('payment_events');
+    }
+};

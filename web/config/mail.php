@@ -115,4 +115,20 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sandbox Delivery Inbox
+    |--------------------------------------------------------------------------
+    |
+    | Resend's onboarding sender (onboarding@resend.dev) only delivers to the
+    | owner of the Resend account, so every customer-facing mail would be
+    | rejected until a domain is verified. While that is the sending address,
+    | all messages are funneled to this single inbox and the body still names
+    | the person they were meant for. Clear the variable once the domain has
+    | SPF/DKIM and customers must receive mail themselves.
+    |
+    */
+
+    'redirect_to' => env('MAIL_REDIRECT_TO'),
+
 ];

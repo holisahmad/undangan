@@ -49,6 +49,55 @@ final class InvitationDraftTest extends TestCase
         $this->assertSame('Awal Kami', $draft->content_json['story']['heading']);
     }
 
+    public function test_the_editor_autosaves_through_a_json_request(): void
+    {
+        $owner = User::factory()->create();
+        $wedding = $this->createWedding($owner);
+
+        $content = CreateWedding::defaultContent();
+        $content['cover']['title'] = 'Judul Autosave';
+
+        $this->actingAs($owner)
+            ->putJson(route('weddings.draft.update', $wedding), [
+                'template_version_id' => $this->templateVersion->getKey(),
+                'content' => $content,
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'saved')
+            ->assertJsonStructure(['status', 'saved_at']);
+
+        $this->assertSame('Judul Autosave', $wedding->draft()->firstOrFail()->content_json['cover']['title']);
+    }
+
+    public function test_autosave_reports_invalid_content_as_json(): void
+    {
+        $owner = User::factory()->create();
+        $wedding = $this->createWedding($owner);
+        $original = $wedding->draft()->firstOrFail()->content_json;
+
+        $this->actingAs($owner)
+            ->putJson(route('weddings.draft.update', $wedding), [
+                'template_version_id' => $this->templateVersion->getKey(),
+                'content' => ['cover' => ['title' => ''], 'features' => []],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['cover.title', 'features.show_story']);
+
+        $this->assertSame($original, $wedding->draft()->firstOrFail()->content_json);
+    }
+
+    public function test_the_editor_page_wires_the_autosave_endpoint(): void
+    {
+        $owner = User::factory()->create();
+        $wedding = $this->createWedding($owner);
+
+        $this->actingAs($owner)
+            ->get(route('weddings.edit', $wedding))
+            ->assertOk()
+            ->assertSee('data-autosave-url="'.route('weddings.draft.update', $wedding).'"', false)
+            ->assertSee('id="draft-save-status"', false);
+    }
+
     public function test_content_that_breaks_the_template_schema_is_rejected(): void
     {
         $owner = User::factory()->create();

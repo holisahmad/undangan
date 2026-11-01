@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Analytics\TrackEvent;
 use App\Data\PublicInvitation;
+use App\Models\AnalyticsEvent;
 use App\Models\Wedding;
 use App\Support\Templates\TemplateRegistry;
 use Illuminate\Http\Response;
@@ -19,7 +21,7 @@ use InvalidArgumentException;
  */
 final class PublicInvitationController extends Controller
 {
-    public function show(string $slug, TemplateRegistry $registry): View|Response
+    public function show(string $slug, TemplateRegistry $registry, TrackEvent $track): View|Response
     {
         $wedding = Wedding::query()->where('slug', $slug)->first();
 
@@ -54,9 +56,16 @@ final class PublicInvitationController extends Controller
             return response()->view('invitations.unavailable', ['reason' => 'unavailable'], 410);
         }
 
+        $track->handle(AnalyticsEvent::INVITATION_VIEWED, $wedding, ['surface' => 'public']);
+
         return view($view, [
             'invitation' => $invitation,
             'preview' => false,
+            'guest' => null,
+            'rsvp' => null,
+            'token' => null,
+            'hasGallery' => $wedding->hasPublicGallery(),
+            'galleryUrl' => route('invitations.gallery', ['slug' => $wedding->slug]),
         ]);
     }
 }

@@ -4,6 +4,8 @@
 
 Roadmap adalah urutan validasi dan delivery, bukan alasan membangun semua modul sekaligus. Setiap fase harus selesai berdasarkan acceptance criteria. Durasi adalah estimasi awal untuk tim kecil dan perlu disesuaikan setelah audit repo.
 
+Status implementasi per 2026-10-30: Phase 2–5 selesai pada tingkat kode dan teruji lokal (SQLite). Phase 6 sebagian besar selesai (QA mobile/browser dan pilot pelanggan belum dapat dieksekusi tanpa browser/pelanggan nyata). Phase 7 hanya share link dan ringkasan RSVP yang dikerjakan; item lain ditunda sampai ada bukti pelanggan. Rincian bukti ada di `PHASE_2_3_REPORT.md`, `PHASE_4_REPORT.md`, dan `PHASE_5_7_REPORT.md`; keputusan media ada di `adr/009-media-storage-and-archive.md`, keputusan hardening/growth ada di `adr/010-beta-hardening-and-growth-scope.md`.
+
 ## Phase 0 — Discovery & business validation (minggu 1–2)
 - Wawancara calon pelanggan.
 - Riset pesaing, harga, dan fitur.
@@ -72,6 +74,8 @@ Exit criteria:
 - RSVP mematuhi party-size limit.
 - CSV errors mudah dipahami.
 
+Status: selesai — lihat `PHASE_4_REPORT.md` dan `adr/008-guests-and-rsvp.md`. Guestbook ditunda di luar scope fase ini.
+
 ## Phase 5 — Gallery and archive (minggu 13–14)
 - Object storage adapter.
 - Signed upload/download.
@@ -87,7 +91,11 @@ Exit criteria:
 - Job gagal terlihat dan dapat diulang.
 - File tidak dapat diakses lintas wedding.
 
+Status: selesai — lihat `PHASE_5_7_REPORT.md` dan `adr/009-media-storage-and-archive.md`. Penyimpangan utama: upload server-side (bukan presigned), pemrosesan sinkron, disk lokal, dan render PNG-only pada build ini.
+
 ## Phase 6 — Beta and launch hardening (minggu 15–16)
+Status implementasi tambahan (November 2026): **Overhaul Beranda & Benchmark inviee.id Selesai (ADR 016)** — Interaktivitas mockup 3D, integrasi Google Fonts, pratinjau instan demo katalog, floating WhatsApp hotline, dan dashboard penyambutan pengantin telah selesai terpasang dan lolos pengujian otomatis.
+
 - End-to-end tests.
 - Security review.
 - Performance checks.
@@ -103,6 +111,8 @@ Exit criteria:
 - Monitoring aktif.
 - Proses support dan retensi jelas.
 
+Status: sebagian besar selesai — end-to-end test, header keamanan, query budget, drill backup SQLite, dan playbook sudah ada (`PHASE_5_7_REPORT.md`, `BACKUP_RESTORE_DRILL.md`, `SUPPORT_PLAYBOOK.md`). QA mobile/browser dan pilot pelanggan belum dijalankan; error tracking eksternal dan alerting belum dipasang.
+
 ## Phase 7 — Growth based on evidence
 - Guest photo contributions.
 - WhatsApp Business integration.
@@ -114,6 +124,8 @@ Exit criteria:
 - Multi-language.
 
 Prioritaskan berdasarkan data pelanggan, margin, dan beban operasional.
+
+Status: share link (WhatsApp/web share, tanpa pelacakan status) dan ringkasan RSVP selesai. Item lain ditunda dengan alasan dan sinyal bukti di `adr/010-beta-hardening-and-growth-scope.md` dan `PHASE_5_7_REPORT.md` bagian 3.
 
 ## Sprint protocol
 Untuk setiap sprint:

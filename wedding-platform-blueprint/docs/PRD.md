@@ -4,6 +4,8 @@
 
 Wedding Experience Platform adalah aplikasi web yang memungkinkan pelanggan membuat undangan pernikahan personal dari template yang tersedia, membagikannya kepada tamu, mengelola RSVP, dan mengakses galeri serta arsip foto sesuai paket dan kebijakan retensi.
 
+> Nama "Wedding Experience Platform" adalah nama kerja blueprint. Merek yang tampil ke pelanggan adalah **Wedly** (tagline *Invitation · Celebration · Forever*, kredit "Dibangun oleh Numos Studio"); sumbernya `APP_NAME` dan `config/site.php`, dengan keputusan di `adr/013-brand-identity-and-icon-set.md`.
+
 ## 2. Masalah yang diselesaikan
 
 - Membuat undangan secara manual memakan waktu dan sulit diperbarui.
@@ -46,13 +48,16 @@ Wedding organizer dan fotografer yang dapat mengelola banyak acara. Bukan kewaji
 - Dashboard pelanggan.
 - Membuat dan mengedit satu atau lebih proyek acara sesuai model data.
 - Data mempelai dan satu atau lebih rangkaian acara.
-- Tiga sampai lima template yang responsif.
+- Belasan template yang responsif, tumbuh lewat renderer baru; setiap tema dapat dibuka sebagai contoh penuh dengan data contoh.
 - Upload foto dasar dengan validasi.
 - Preview undangan.
 - Draft dan publish.
 - URL undangan unik.
 - Status publikasi dan tanggal kedaluwarsa.
 - Landing page bisnis, katalog template, detail template, dan paket harga.
+- Katalog tema publik yang dapat diindeks (`/tema`): filter kategori + paket dengan penghitung, paginasi server, dan "tampilkan lebih banyak" yang mengambil fragmen kartu yang sama; beranda hanya memuat strip terkurasi dengan tautan ke katalog.
+- Tingkat paket untuk desain: tema Signature/Premium ditampilkan penuh tetapi terkunci — tidak dapat dipilih sebagai perpindahan baru dan tidak dapat diterbitkan sampai paket pembukanya aktif (ADR-014).
+- Bagian layanan pelaminan di beranda (rias, dekorasi, dokumentasi, WO, cetak, hiburan) sebagai kerja mitra tanpa harga dan tanpa pemesanan, dengan minat layanan yang menempel pada lead (ADR-015).
 - Admin panel dasar: pelanggan, acara/undangan, template, pesanan, status layanan.
 - Paket dan pesanan.
 - Pembayaran melalui provider yang dipilih; mode sandbox sebelum produksi.

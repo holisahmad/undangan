@@ -11,6 +11,11 @@ use App\Http\Requests\UpdateWeddingRequest;
 use App\Models\InvitationTemplate;
 use App\Models\TemplateVersion;
 use App\Models\Wedding;
+use App\Support\Billing\TemplateAccess;
+use App\Support\Guests\RsvpSummary;
+use App\Support\Invitations\InvitationCopy;
+use App\Support\Media\MediaQuota;
+use App\Support\Templates\TemplatePresentation;
 use App\Support\Templates\TemplateRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,8 +39,12 @@ final class WeddingController extends Controller
 
     public function create(TemplateRegistry $registry): View
     {
+        // Nothing has been paid for yet, so every shipped theme is offered: the
+        // package is picked when the order is placed and the card states which
+        // package each design belongs to (docs/BUSINESS_MODEL.md).
         return view('weddings.create', [
             'templates' => $this->publishedTemplates($registry),
+            'locked' => [],
         ]);
     }
 
@@ -52,19 +61,26 @@ final class WeddingController extends Controller
             ->with('status', 'Draft undangan berhasil dibuat.');
     }
 
-    public function show(Wedding $wedding): View
+    public function show(Wedding $wedding, MediaQuota $quota, RsvpSummary $rsvpSummary): View
     {
         $this->authorize('view', $wedding);
 
-        $wedding->load(['partners', 'events', 'activePublication', 'latestPublication']);
+        $wedding->load(['partners', 'events', 'activePublication', 'latestPublication', 'testimonial']);
+
+        $publicUrl = route('invitations.public', ['slug' => $wedding->slug]);
 
         return view('weddings.show', [
             'wedding' => $wedding,
             'entitlement' => $wedding->activeInvitationEntitlement(),
+            'rsvp' => $rsvpSummary->for($wedding),
+            'photoCount' => $quota->photosUsed($wedding),
+            'photoLimit' => $quota->photoLimit($wedding),
+            'publicUrl' => $publicUrl,
+            'shareMessage' => InvitationCopy::shareMessage($wedding, $publicUrl),
         ]);
     }
 
-    public function edit(Wedding $wedding, TemplateRegistry $registry): View
+    public function edit(Wedding $wedding, TemplateRegistry $registry, TemplateAccess $access): View
     {
         $this->authorize('update', $wedding);
 
@@ -76,11 +92,25 @@ final class WeddingController extends Controller
             'latestPublication',
         ]);
 
+        $templates = $this->publishedTemplates($registry);
+        $ceiling = $access->ceilingFor($wedding);
+
+        // Versions the paid package does not unlock stay in the list, labelled
+        // with what they need: hiding a design the owner can upgrade to is worse
+        // than showing it as an option they have not bought yet.
+        $locked = $templates
+            ->filter(static fn (TemplateVersion $version): bool => ! $access->allows($ceiling, $version->template))
+            ->mapWithKeys(static fn (TemplateVersion $version): array => [
+                (string) $version->getKey() => TemplatePresentation::tierLabel($version->template->tier),
+            ])
+            ->all();
+
         return view('weddings.edit', [
             'wedding' => $wedding,
             'draft' => $wedding->draft,
             'entitlement' => $wedding->activeInvitationEntitlement(),
-            'templates' => $this->publishedTemplates($registry),
+            'templates' => $templates,
+            'locked' => $locked,
         ]);
     }
 
@@ -103,9 +133,12 @@ final class WeddingController extends Controller
             ->where('status', 'published')
             ->whereIn('renderer_key', $registry->rendererKeys())
             ->with('template')
-            ->orderBy('renderer_key')
             ->get()
             ->filter(static fn (TemplateVersion $version): bool => $version->template !== null
-                && $version->template->status === InvitationTemplate::STATUS_ACTIVE);
+                && $version->template->status === InvitationTemplate::STATUS_ACTIVE)
+            // The curated catalogue order, not the renderer spelling, so the
+            // picker and /tema never present the designs in a different sequence.
+            ->sortBy([[static fn (TemplateVersion $version): int => (int) ($version->template->sort_order ?? 0), 'asc'], [static fn (TemplateVersion $version): string => strtolower((string) $version->template->name), 'asc']])
+            ->values();
     }
 }

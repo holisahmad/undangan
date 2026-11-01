@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AlbumVisibility;
 use App\Enums\WeddingLifecycleStatus;
 use Database\Factories\WeddingFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -23,6 +24,8 @@ class Wedding extends Model
         'slug',
         'internal_title',
         'lifecycle_status',
+        'showcase_enabled',
+        'showcase_enabled_at',
     ];
 
     /**
@@ -32,6 +35,8 @@ class Wedding extends Model
     {
         return [
             'lifecycle_status' => WeddingLifecycleStatus::class,
+            'showcase_enabled' => 'boolean',
+            'showcase_enabled_at' => 'datetime',
         ];
     }
 
@@ -82,6 +87,48 @@ class Wedding extends Model
     public function entitlements(): HasMany
     {
         return $this->hasMany(ServiceEntitlement::class);
+    }
+
+    public function guests(): HasMany
+    {
+        return $this->hasMany(Guest::class);
+    }
+
+    public function testimonial(): HasOne
+    {
+        return $this->hasOne(Testimonial::class);
+    }
+
+    public function guestGroups(): HasMany
+    {
+        return $this->hasMany(GuestGroup::class);
+    }
+
+    public function mediaAssets(): HasMany
+    {
+        return $this->hasMany(MediaAsset::class);
+    }
+
+    public function mediaAlbums(): HasMany
+    {
+        return $this->hasMany(MediaAlbum::class);
+    }
+
+    public function archives(): HasMany
+    {
+        return $this->hasMany(ArchiveJob::class);
+    }
+
+    /**
+     * True when at least one public album holds a ready photo. Used by the
+     * invitation templates to decide whether a gallery link is useful.
+     */
+    public function hasPublicGallery(): bool
+    {
+        return $this->mediaAlbums()
+            ->where('visibility', AlbumVisibility::Public)
+            ->whereHas('assets', static fn ($query) => $query->ready())
+            ->exists();
     }
 
     public function activeInvitationEntitlement(): ?ServiceEntitlement

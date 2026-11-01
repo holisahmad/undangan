@@ -7,11 +7,17 @@ namespace App\Http\Requests;
 use App\Models\Wedding;
 use App\Models\WeddingEvent;
 use Carbon\CarbonImmutable;
+use DateTimeZone;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 final class EventRequest extends FormRequest
 {
+    /**
+     * Matches the column default in the wedding_events migration.
+     */
+    private const DEFAULT_TIMEZONE = 'Asia/Jakarta';
+
     public function authorize(): bool
     {
         return $this->user()?->can('update', $this->wedding()) ?? false;
@@ -27,7 +33,9 @@ final class EventRequest extends FormRequest
             'title' => ['required', 'string', 'max:120'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-            'timezone' => ['nullable', 'string', 'max:64'],
+            // The value is passed to Carbon as a timezone, so anything outside
+            // the registered identifiers would throw while parsing.
+            'timezone' => ['nullable', 'string', 'max:64', Rule::in(DateTimeZone::listIdentifiers())],
             'venue_name' => ['required', 'string', 'max:160'],
             'address' => ['nullable', 'string', 'max:500'],
             'map_url' => ['nullable', 'url', 'max:2048'],
@@ -45,7 +53,7 @@ final class EventRequest extends FormRequest
     public function payload(): array
     {
         $data = $this->validated();
-        $timezone = $data['timezone'] ?? 'Asia/Jakarta';
+        $timezone = $this->timezone();
 
         $data['timezone'] = $timezone;
         $data['display_order'] ??= 0;
@@ -55,6 +63,20 @@ final class EventRequest extends FormRequest
             : null;
 
         return $data;
+    }
+
+    /**
+     * Falls back to the platform default when a stored or supplied value is not
+     * a known identifier, so an old row can never turn saving an event into an
+     * unhandled error.
+     */
+    private function timezone(): string
+    {
+        $timezone = (string) ($this->validated('timezone') ?? '');
+
+        return in_array($timezone, DateTimeZone::listIdentifiers(), true)
+            ? $timezone
+            : self::DEFAULT_TIMEZONE;
     }
 
     public function wedding(): Wedding

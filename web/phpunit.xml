@@ -26,10 +26,17 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="MAIL_MAILER" value="array"/>
+        <env name="MAIL_REDIRECT_TO" value=""/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Three destinations so the instruction page renders a real list. -->
+        <env name="PAYMENT_BANK_ACCOUNTS" value="BCA|1234567890|PT Undangan Bahagia;Mandiri|9876543210|PT Undangan Bahagia;BNI|1122334455|PT Undangan Bahagia"/>
+        <env name="PAYMENT_PROOF_DISK" value="local"/>
+        <!-- The sandbox gateway has no fallback secret in config/platform.php,
+             so the suite supplies its own; tests sign payloads with this value. -->
+        <env name="PAYMENT_FAKE_WEBHOOK_SECRET" value="phpunit-fake-sandbox-secret"/>
     </php>
 </phpunit>
