@@ -16,11 +16,15 @@ use Illuminate\Support\Facades\Mail;
 final class SandboxMailbox
 {
     /**
-     * A blank inbox leaves delivery untouched, which is the production setting.
+     * A blank, 'none', or disabled inbox leaves delivery untouched, which is the production setting.
      */
     public function apply(?string $inbox): void
     {
-        if ($inbox === null || trim($inbox) === '') {
+        if (
+            $inbox === null
+            || trim($inbox) === ''
+            || in_array(strtolower(trim($inbox)), ['none', 'null', 'false', 'off', '0', '-'], true)
+        ) {
             return;
         }
 
