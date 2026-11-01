@@ -37,6 +37,7 @@
         <env name="PAYMENT_PROOF_DISK" value="local"/>
         <!-- The sandbox gateway has no fallback secret in config/platform.php,
              so the suite supplies its own; tests sign payloads with this value. -->
+        <env name="PAYMENT_FAKE_ENABLED" value="true"/>
         <env name="PAYMENT_FAKE_WEBHOOK_SECRET" value="phpunit-fake-sandbox-secret"/>
     </php>
 </phpunit>

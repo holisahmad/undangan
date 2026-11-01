@@ -22,6 +22,16 @@ final class NotificationsTest extends TestCase
     use RefreshDatabase;
     use RendersMail;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'platform.payments.default_gateway' => 'fake',
+            'platform.payments.fake.enabled' => true,
+        ]);
+    }
+
     public function test_a_verified_payment_emails_the_owner_once(): void
     {
         Notification::fake();
