@@ -18,20 +18,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invitation_templates', function (Blueprint $table) {
-            $table->string('tier', 20)->default(InvitationTemplate::TIER_ESSENTIAL)->after('category');
-            $table->string('badge', 24)->nullable()->after('tier');
-            $table->unsignedInteger('sort_order')->default(0)->after('badge');
+            if (! Schema::hasColumn('invitation_templates', 'tier')) {
+                $table->string('tier', 20)->default(InvitationTemplate::TIER_ESSENTIAL)->after('category');
+            }
+            if (! Schema::hasColumn('invitation_templates', 'badge')) {
+                $table->string('badge', 24)->nullable()->after('tier');
+            }
+            if (! Schema::hasColumn('invitation_templates', 'sort_order')) {
+                $table->unsignedInteger('sort_order')->default(0)->after('badge');
+            }
 
-            // The public catalogue filters by status and tier, then orders by the
-            // curated position, so both are covered by one index prefix.
-            $table->index(['status', 'tier', 'sort_order'], 'invitation_templates_catalog_index');
+            try {
+                $table->index(['status', 'tier', 'sort_order'], 'invitation_templates_catalog_index');
+            } catch (\Throwable) {
+                // Index may already exist
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('invitation_templates', function (Blueprint $table) {
-            $table->dropIndex('invitation_templates_catalog_index');
+            try {
+                $table->dropIndex('invitation_templates_catalog_index');
+            } catch (\Throwable) {
+            }
             $table->dropColumn(['tier', 'badge', 'sort_order']);
         });
     }
