@@ -18,8 +18,8 @@ class TestMailSend extends Command
         $to = $this->option('to') ?: config('mail.from.address');
 
         $this->info("Mengirim email test ke: {$to}");
-        $this->info('Mailer : ' . config('mail.default'));
-        $this->info('From   : ' . config('mail.from.address'));
+        $this->info('Mailer : '.config('mail.default'));
+        $this->info('From   : '.config('mail.from.address'));
         $redirect = config('mail.redirect_to');
         if ($redirect) {
             $this->warn("MAIL_REDIRECT_TO aktif — semua email dialihkan ke: {$redirect}");
@@ -34,10 +34,12 @@ class TestMailSend extends Command
                 }
             );
 
-            $this->info('✓ Email berhasil dikirim! Cek inbox: ' . ($redirect ?: $to));
+            $this->info('✓ Email berhasil dikirim! Cek inbox: '.($redirect ?: $to));
+
             return self::SUCCESS;
         } catch (\Throwable $e) {
-            $this->error('✗ Gagal: ' . $e->getMessage());
+            $this->error('✗ Gagal: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

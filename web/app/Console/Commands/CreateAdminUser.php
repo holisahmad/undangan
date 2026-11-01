@@ -20,16 +20,16 @@ class CreateAdminUser extends Command
 
     public function handle(): int
     {
-        $email    = $this->option('email');
-        $name     = $this->option('name');
+        $email = $this->option('email');
+        $name = $this->option('name');
         $password = $this->option('password');
 
         $user = User::updateOrCreate(
             ['email' => $email],
             [
-                'name'              => $name,
-                'password'          => Hash::make($password),
-                'role'              => UserRole::Admin,
+                'name' => $name,
+                'password' => Hash::make($password),
+                'role' => UserRole::Admin,
                 'email_verified_at' => now(),
             ]
         );
