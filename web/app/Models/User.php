@@ -95,7 +95,11 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification(): void
     {
-        $this->notify(new VerifyEmailNotification);
+        try {
+            $this->notify(new VerifyEmailNotification);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     public function isSuspended(): bool
