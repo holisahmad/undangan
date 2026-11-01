@@ -13,3 +13,4 @@ php artisan route:cache || true
 php artisan view:cache || true
 
 exec "$@"
+

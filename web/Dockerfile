@@ -9,6 +9,9 @@ RUN npm run build
 # Stage 2: Production PHP runtime with FrankenPHP
 FROM dunglas/frankenphp:1-php8.3-bookworm AS runner
 
+# Install Composer from official image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 # Install essential PHP extensions
 RUN install-php-extensions \
     pdo_pgsql \
