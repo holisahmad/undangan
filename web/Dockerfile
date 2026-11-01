@@ -6,8 +6,8 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Production PHP runtime with FrankenPHP
-FROM dunglas/frankenphp:1-php8.3-bookworm AS runner
+# Stage 2: Production PHP runtime with FrankenPHP (PHP 8.4)
+FROM dunglas/frankenphp:1-php8.4-bookworm AS runner
 
 # Install Composer from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -35,7 +35,7 @@ COPY --from=build /app/public/build /app/public/build
 
 # Install production PHP dependencies
 RUN cp -n .env.example .env || true \
-    && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+    && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-req=php+ \
     && rm -f .env
 
 # Set required permissions for Laravel storage and cache
