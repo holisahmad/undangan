@@ -17,11 +17,11 @@ if [ -n "$DB_HOST" ] || [ -n "$DB_URL" ]; then
     fi
 fi
 
-# Cache config, routes, and views for optimal production performance
-if [ ! -f /app/bootstrap/cache/config.php ]; then
-    php artisan config:cache || true
-    php artisan route:cache || true
-    php artisan view:cache || true
-fi
+# Cache config, routes, and views for optimal production performance.
+# Always re-cache on every restart so env-var changes (e.g. APP_URL) are
+# picked up immediately without needing a full redeploy.
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
 
 exec "$@"
