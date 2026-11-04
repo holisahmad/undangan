@@ -33,7 +33,7 @@
         @else
             <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($cards as $card)
-                    <a href="{{ $card['url'] }}"
+                    <a href="{{ $card['url'] }}" target="_blank" rel="noopener"
                        class="group flex flex-col rounded-lg border border-stone-200 bg-white p-6 shadow-sm transition hover:border-rose-300 hover:shadow">
                         <p class="text-xs uppercase tracking-[0.2em] text-stone-500">{{ $card['template'] !== '' ? $card['template'] : 'Template' }}</p>
                         <p class="mt-2 font-serif text-xl font-semibold group-hover:text-rose-800">{{ $card['headline'] }}</p>

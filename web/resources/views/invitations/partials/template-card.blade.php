@@ -23,8 +23,8 @@
         @include('templates.partials.mini-cover', ['theme' => $theme])
 
         @if ($demoUrl !== null)
-            <a class="tpl-stage__open" href="{{ $demoUrl }}"
-               aria-label="Buka demo tema {{ $template->name }}">
+            <a class="tpl-stage__open" href="{{ $demoUrl }}" target="_blank" rel="noopener"
+               aria-label="Buka demo tema {{ $template->name }} di tab baru">
                 Buka demo
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -45,7 +45,7 @@
 
         <div class="tpl-actions">
             @if ($demoUrl !== null)
-                <a href="{{ $demoUrl }}" class="tpl-link">Lihat contoh</a>
+                <a href="{{ $demoUrl }}" class="tpl-link" target="_blank" rel="noopener">Lihat contoh</a>
             @else
                 <span class="tpl-link">Segera hadir</span>
             @endif

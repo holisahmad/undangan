@@ -139,6 +139,7 @@
                                     </div>
                                     <a href="{{ route('templates.demo', ['template' => $template->slug]) }}"
                                        target="_blank"
+                                       rel="noopener"
                                        class="font-semibold text-rose-800 hover:underline flex items-center gap-0.5">
                                         Lihat contoh &rarr;
                                     </a>

@@ -56,6 +56,13 @@ final class ThemeCatalogTest extends TestCase
             $this->assertStringContainsString($template->name, $seen);
             $this->assertStringContainsString(route('templates.demo', ['template' => $template->slug]), $seen);
         }
+
+        // A demo opens in its own tab: browsing themes should never lose the catalogue.
+        $sample = InvitationTemplate::query()->published()->orderBy('slug')->firstOrFail();
+        $this->assertStringContainsString(
+            'href="'.route('templates.demo', ['template' => $sample->slug]).'" class="tpl-link" target="_blank" rel="noopener"',
+            $seen
+        );
     }
 
     public function test_an_archived_theme_never_reaches_the_catalogue(): void
