@@ -10,6 +10,7 @@ use App\Data\PublicInvitation;
 use App\Enums\RsvpStatus;
 use App\Models\AnalyticsEvent;
 use App\Models\GuestInvitationLink;
+use App\Support\Invitations\InvitationMedia;
 use App\Support\Templates\TemplateRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,13 +63,19 @@ final class GuestInvitationController extends Controller
 
         $track->handle(AnalyticsEvent::INVITATION_VIEWED, $wedding, ['surface' => 'personal']);
 
+        // Resolve the photos once here, exactly like the public page, so a
+        // personal link renders the same cover photo and the same gallery link
+        // without each renderer running its own query.
+        $media = InvitationMedia::for($invitation, false, $wedding);
+
         return view($view, [
             'invitation' => $invitation,
             'preview' => false,
             'guest' => $guest,
             'rsvp' => $guest->rsvp,
             'token' => (string) $request->route('token'),
-            'hasGallery' => $wedding->hasPublicGallery(),
+            'media' => $media,
+            'hasGallery' => $media->gallery() !== [],
             'galleryUrl' => route('invitations.gallery', ['slug' => $wedding->slug]),
         ]);
     }

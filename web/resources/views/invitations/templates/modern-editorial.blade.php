@@ -6,15 +6,19 @@
     $events = $invitation->events;
     $recipient = (isset($guest) && $guest !== null ? $guest->display_name : null) ?: request('to');
 
-    $heroImage = asset('images/demo/couple-hero.webp');
-    $brideImage = asset('images/demo/bride.webp');
-    $groomImage = asset('images/demo/groom.webp');
-    $galleryImages = [
-        asset('images/demo/gallery-1.webp'),
-        asset('images/demo/gallery-2.webp'),
-        asset('images/demo/gallery-3.webp'),
-        asset('images/demo/gallery-4.webp'),
-    ];
+    // Photos come from the couple's own public albums, or the demo set on a
+    // sample page. A real invitation never borrows stock photography.
+    $media ??= \App\Support\Invitations\InvitationMedia::for($invitation, $demo ?? false);
+    $heroImage = $media->hero();
+    $brideImage = $media->portrait('bride');
+    $groomImage = $media->portrait('groom');
+    $galleryImages = $media->gallery();
+    $monogram = collect($invitation->couple)
+        ->map(static fn (array $person): string => trim((string) ($person['nickname'] ?? $person['display_name'] ?? '')))
+        ->filter()
+        ->map(static fn (string $name): string => mb_strtoupper(mb_substr($name, 0, 1)))
+        ->take(2)
+        ->implode('·');
 @endphp
 <!DOCTYPE html>
 <html lang="id" data-template="modern-editorial.v1">
@@ -103,92 +107,7 @@
             .name, .venue, .address { overflow-wrap: anywhere; }
         }
 
-        /* Visual Enhancements */
-        .hero-arch {
-            position: relative;
-            width: min(100%, 250px);
-            aspect-ratio: 4 / 5;
-            margin: 1.5rem auto 1.3rem;
-            border-radius: 125px 125px 14px 14px;
-            overflow: hidden;
-            border: 2px solid var(--pw-accent, currentColor);
-            box-shadow: 0 14px 34px -8px rgba(0, 0, 0, .45);
-        }
-        .hero-arch img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform .6s ease;
-        }
-        .hero-arch:hover img { transform: scale(1.06); }
-        .person-arch {
-            width: 155px;
-            height: 215px;
-            border-radius: 85px 85px 12px 12px;
-            overflow: hidden;
-            border: 2px solid var(--pw-accent, currentColor);
-            box-shadow: 0 10px 24px -6px rgba(0, 0, 0, .35);
-            margin: 0 auto 1rem;
-        }
-        .person-arch img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform .5s ease;
-        }
-        .person-arch:hover img { transform: scale(1.06); }
-        .cover__guest-card {
-            padding: 1rem 1.2rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, .07);
-            border: 1px solid var(--pw-line, rgba(0, 0, 0, .2));
-            margin-top: 1.2rem;
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: .75rem;
-            margin-top: 1.3rem;
-        }
-        .gallery-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--pw-line, rgba(0, 0, 0, .15));
-            box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
-        }
-        .gallery-item:first-child {
-            grid-column: span 2;
-            aspect-ratio: 16 / 9;
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform .6s ease;
-        }
-        .gallery-item:hover img { transform: scale(1.08); }
-        .reveal-on-scroll {
-            opacity: 0;
-            transform: translateY(26px);
-            transition: opacity .8s cubic-bezier(0.16, 1, 0.3, 1), transform .8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .reveal-on-scroll.is-revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .cover__open {
-            animation: pulse-open 2.5s infinite;
-        }
-        @keyframes pulse-open {
-            0%, 100% { box-shadow: 0 6px 18px -4px rgba(0, 0, 0, .4), 0 0 10px var(--pw-line, transparent); }
-            50% { box-shadow: 0 8px 24px -2px rgba(0, 0, 0, .6), 0 0 20px var(--pw-accent, transparent); }
-        }
-    </style>
+</style>
 </head>
 <body>
     @include('invitations.partials.demo-bar')
@@ -205,7 +124,7 @@
             <p class="greeting">{{ $cover['greeting'] }}</p>
         @endif
 
-        <div class="hero-arch"><img src="{{ $heroImage }}" alt="Foto Mempelai" width="400" height="500"></div>
+        @include('invitations.partials.photo', ['src' => $heroImage, 'class' => 'hero-arch', 'alt' => 'Foto mempelai', 'initial' => $monogram])
         <h1 class="names">{{ $invitation->coupleHeadline() ?: 'Mempelai' }}</h1>
         @if ($recipient !== null)
             <div class="personal-badge" style="text-align: center; margin: 18px auto; max-width: 20rem; padding: 12px 16px; border: 1px dashed rgba(169, 139, 95, .4); border-radius: 8px; background: rgba(255, 255, 255, .7);">
@@ -235,9 +154,7 @@
                             $isBride = ($person['type'] ?? '') === 'bride';
                             $photo = $isBride ? $brideImage : $groomImage;
                         @endphp
-                        <div class="person-arch">
-                            <img src="{{ $photo }}" alt="{{ $person['display_name'] ?? 'Mempelai' }}" width="300" height="400">
-                        </div>
+                        @include('invitations.partials.photo', ['src' => $photo, 'class' => 'person-arch', 'alt' => $person['display_name'] ?? 'Mempelai', 'initial' => $monogram, 'size' => ['width' => 300, 'height' => 400]])
                         <p class="role">{{ $person['type'] === 'groom' ? 'Mempelai Pria' : ($person['type'] === 'bride' ? 'Mempelai Wanita' : 'Mempelai') }}</p>
                         <p class="name">{{ $person['display_name'] ?? '' }}</p>
                         @if (! empty($person['parents']))
@@ -285,18 +202,7 @@
         @endif
 
         
-        {{-- Galeri Foto Prewedding --}}
-        <section class="reveal-on-scroll" aria-label="Galeri" style="margin-top: 2.4rem; text-align: center;">
-            <p style="margin: 0; font-size: .65rem; letter-spacing: .35em; text-transform: uppercase; opacity: .75;">Dokumentasi</p>
-            <h2 style="margin: .4rem 0 1rem; font-size: 1.6rem; font-weight: 600;">Momen Bahagia</h2>
-            <div class="gallery-grid">
-                @foreach ($galleryImages as $index => $gImg)
-                    <div class="gallery-item">
-                        <img src="{{ $gImg }}" alt="Galeri prewedding {{ $index + 1 }}" loading="lazy" width="600" height="400">
-                    </div>
-                @endforeach
-            </div>
-        </section>
+        @include('invitations.partials.gallery', ['galleryImages' => $galleryImages])
 
         @include('invitations.partials.power')
 

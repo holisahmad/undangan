@@ -51,6 +51,7 @@ use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\WeddingController;
 use App\Http\Controllers\WeddingEventController;
 use App\Http\Controllers\WeddingPartnerController;
+use App\Http\Controllers\WeddingPhotoController;
 use App\Http\Controllers\WeddingShowcaseController;
 use App\Http\Middleware\RequireTwoFactor;
 use Illuminate\Support\Facades\Route;
@@ -196,6 +197,16 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
         // Gallery: photos, albums and archives are only reachable through the
         // owning wedding, so a foreign UUID resolves to 404 before authorisation.
+        // Invitation photos are the couple's own pre-wedding pictures: uploaded
+        // from the editor into one public album, with a chosen cover and an
+        // option to show a monogram instead.
+        Route::post('weddings/{wedding}/photos', [WeddingPhotoController::class, 'store'])
+            ->name('weddings.photos.store');
+        Route::patch('weddings/{wedding}/photos/display', [WeddingPhotoController::class, 'display'])
+            ->name('weddings.photos.display');
+        Route::patch('weddings/{wedding}/photos/{mediaAsset}/cover', [WeddingPhotoController::class, 'cover'])
+            ->name('weddings.photos.cover');
+
         Route::get('weddings/{wedding}/gallery', [GalleryController::class, 'index'])->name('weddings.gallery.index');
         Route::post('weddings/{wedding}/gallery/photos', [GalleryController::class, 'store'])
             ->name('weddings.gallery.photos.store');

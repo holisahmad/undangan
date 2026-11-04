@@ -7,6 +7,7 @@ namespace App\Actions\Media;
 use App\Enums\MediaStatus;
 use App\Models\MediaAsset;
 use App\Models\User;
+use App\Models\Wedding;
 use App\Support\Audit\AuditLogger;
 use App\Support\Media\MediaStorage;
 use Throwable;
@@ -48,6 +49,12 @@ final class DeleteMediaAsset
             'status' => MediaStatus::Deleted,
             'deleted_at' => now(),
         ])->save();
+
+        // A deleted photo must not stay behind as the chosen invitation cover:
+        // the invitation would open on a photo that no longer exists.
+        Wedding::query()
+            ->where('cover_media_asset_id', $asset->getKey())
+            ->update(['cover_media_asset_id' => null]);
 
         $this->audit->log(
             action: 'media.deleted',

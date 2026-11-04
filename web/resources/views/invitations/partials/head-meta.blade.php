@@ -33,6 +33,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400..700&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap" rel="stylesheet">
 
+{{-- Shared token-driven foundation: photo frames, gallery, reveal and the
+     themed RSVP form. Renderers no longer carry their own copy of these rules. --}}
+@include('invitations.partials.theme-base')
+
 {{-- A guest who saves the invitation to the home screen keeps our icon. --}}
 @include('partials.brand-head')
 

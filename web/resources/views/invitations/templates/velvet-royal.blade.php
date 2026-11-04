@@ -29,15 +29,19 @@
 
     $recipient = (isset($guest) && $guest !== null ? $guest->display_name : null) ?: request('to');
 
-    $heroImage = asset('images/demo/couple-hero.webp');
-    $brideImage = asset('images/demo/bride.webp');
-    $groomImage = asset('images/demo/groom.webp');
-    $galleryImages = [
-        asset('images/demo/gallery-1.webp'),
-        asset('images/demo/gallery-2.webp'),
-        asset('images/demo/gallery-3.webp'),
-        asset('images/demo/gallery-4.webp'),
-    ];
+    // Photos come from the couple's own public albums, or the demo set on a
+    // sample page. A real invitation never borrows stock photography.
+    $media ??= \App\Support\Invitations\InvitationMedia::for($invitation, $demo ?? false);
+    $heroImage = $media->hero();
+    $brideImage = $media->portrait('bride');
+    $groomImage = $media->portrait('groom');
+    $galleryImages = $media->gallery();
+    $monogram = collect($invitation->couple)
+        ->map(static fn (array $person): string => trim((string) ($person['nickname'] ?? $person['display_name'] ?? '')))
+        ->filter()
+        ->map(static fn (string $name): string => mb_strtoupper(mb_substr($name, 0, 1)))
+        ->take(2)
+        ->implode('·');
 @endphp
 <!DOCTYPE html>
 <html lang="id" data-template="velvet-royal.v1">
@@ -372,92 +376,7 @@
             body { background: #fff; color: #1c1c1c; }
         }
 
-        /* Visual Enhancements */
-        .hero-arch {
-            position: relative;
-            width: min(100%, 250px);
-            aspect-ratio: 4 / 5;
-            margin: 1.6rem auto 1.4rem;
-            border-radius: 130px 130px 14px 14px;
-            overflow: hidden;
-            border: 2px solid var(--gold);
-            box-shadow: 0 16px 40px -10px rgba(0, 0, 0, .8), 0 0 25px rgba(201, 162, 75, .25);
-        }
-        .hero-arch img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform .6s ease;
-        }
-        .hero-arch:hover img { transform: scale(1.06); }
-        .person-arch {
-            width: 160px;
-            height: 220px;
-            border-radius: 90px 90px 12px 12px;
-            overflow: hidden;
-            border: 2px solid var(--gold);
-            box-shadow: 0 10px 24px -8px rgba(0, 0, 0, .6);
-            margin: 0 auto 1.1rem;
-        }
-        .person-arch img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform .5s ease;
-        }
-        .person-arch:hover img { transform: scale(1.06); }
-        .cover__guest-card {
-            padding: 1rem 1.2rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, .05);
-            border: 1px solid var(--line);
-            margin-top: 1.2rem;
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: .8rem;
-            margin-top: 1.4rem;
-        }
-        .gallery-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--line);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
-        }
-        .gallery-item:first-child {
-            grid-column: span 2;
-            aspect-ratio: 16 / 9;
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform .6s ease;
-        }
-        .gallery-item:hover img { transform: scale(1.08); }
-        .reveal-on-scroll {
-            opacity: 0;
-            transform: translateY(28px);
-            transition: opacity .8s cubic-bezier(0.16, 1, 0.3, 1), transform .8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .reveal-on-scroll.is-revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .cover__open {
-            animation: pulse-velvet 2.5s infinite;
-        }
-        @keyframes pulse-velvet {
-            0%, 100% { box-shadow: 0 6px 20px -4px rgba(0, 0, 0, .6), 0 0 12px rgba(201, 162, 75, .2); }
-            50% { box-shadow: 0 8px 26px -2px rgba(0, 0, 0, .8), 0 0 22px rgba(201, 162, 75, .45); }
-        }
-    </style>
+</style>
 </head>
 <body>
     <main class="page">
@@ -532,9 +451,7 @@
                 @endforelse
             </h1>
 
-            <div class="hero-arch">
-                <img src="{{ $heroImage }}" alt="Foto Mempelai" width="400" height="500">
-            </div>
+            @include('invitations.partials.photo', ['src' => $heroImage, 'class' => 'hero-arch', 'alt' => 'Foto mempelai', 'initial' => $monogram])
             <div class="rule" aria-hidden="true"><span class="rule__lozenge"></span></div>
 
             @if ($date !== null)
@@ -628,24 +545,7 @@
         @endif
 
         
-        {{-- Galeri Foto Prewedding --}}
-        <section class="block reveal-on-scroll" aria-label="Galeri">
-            <div class="block__head">
-                <p class="block__index">04</p>
-                <h2 class="block__title">Momen Bahagia</h2>
-                <div class="rule" aria-hidden="true"><span class="rule__lozenge"></span></div>
-            </div>
-
-            <div class="panel">
-                <div class="gallery-grid">
-                    @foreach ($galleryImages as $index => $gImg)
-                        <div class="gallery-item">
-                            <img src="{{ $gImg }}" alt="Galeri prewedding {{ $index + 1 }}" loading="lazy" width="600" height="400">
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
+        @include('invitations.partials.gallery', ['galleryImages' => $galleryImages])
 
         @include('invitations.partials.power')
 

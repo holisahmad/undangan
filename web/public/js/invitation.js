@@ -10,6 +10,10 @@
 (function () {
     'use strict';
 
+    // Reveal-on-scroll hides content until it is observed. Without script the
+    // stylesheet keeps everything visible, so this flag is what opts in.
+    document.documentElement.classList.add('js');
+
     var pad = function (value) {
         return value < 10 ? '0' + value : String(value);
     };

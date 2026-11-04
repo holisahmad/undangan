@@ -28,16 +28,19 @@
         : url()->current();
 
     // Aesthetic prewedding imagery
-    $heroImage = asset('images/demo/couple-hero.webp');
-    $brideImage = asset('images/demo/bride.webp');
-    $groomImage = asset('images/demo/groom.webp');
-    $flowerDecor = asset('images/demo/flower-decor.webp');
-    $galleryImages = [
-        asset('images/demo/gallery-1.webp'),
-        asset('images/demo/gallery-2.webp'),
-        asset('images/demo/gallery-3.webp'),
-        asset('images/demo/gallery-4.webp'),
-    ];
+    // Photos come from the couple's own public albums, or the demo set on a
+    // sample page. A real invitation never borrows stock photography.
+    $media ??= \App\Support\Invitations\InvitationMedia::for($invitation, $demo ?? false);
+    $heroImage = $media->hero();
+    $brideImage = $media->portrait('bride');
+    $groomImage = $media->portrait('groom');
+    $galleryImages = $media->gallery();
+    $monogram = collect($invitation->couple)
+        ->map(static fn (array $person): string => trim((string) ($person['nickname'] ?? $person['display_name'] ?? '')))
+        ->filter()
+        ->map(static fn (string $name): string => mb_strtoupper(mb_substr($name, 0, 1)))
+        ->take(2)
+        ->implode('·');
 @endphp
 <!DOCTYPE html>
 <html lang="id" data-template="emerald-gilded.v1">
@@ -698,9 +701,7 @@
                 <p class="sec-eyebrow">{{ $cover['title'] ?? 'The Wedding Of' }}</p>
                 <h2 class="sec-title">{{ $invitation->coupleHeadline() ?: 'Ayu & Bima' }}</h2>
 
-                <div class="hero-arch">
-                    <img src="{{ $heroImage }}" alt="Foto Mempelai" width="400" height="520">
-                </div>
+                @include('invitations.partials.photo', ['src' => $heroImage, 'class' => 'hero-arch', 'alt' => 'Foto mempelai', 'initial' => $monogram])
 
                 @if (! empty($cover['greeting']))
                     <p class="story-text">{{ $cover['greeting'] }}</p>
@@ -738,9 +739,7 @@
                             @endphp
 
                             <article class="person-card">
-                                <div class="person-arch">
-                                    <img src="{{ $photo }}" alt="{{ $person['display_name'] ?? 'Mempelai' }}" width="300" height="400">
-                                </div>
+                                @include('invitations.partials.photo', ['src' => $photo, 'class' => 'person-arch', 'alt' => $person['display_name'] ?? 'Mempelai', 'initial' => $monogram, 'size' => ['width' => 300, 'height' => 400]])
 
                                 <p class="person-role">
                                     {{ $person['type'] === 'groom' ? 'Mempelai Pria' : ($person['type'] === 'bride' ? 'Mempelai Wanita' : 'Mempelai') }}
@@ -853,23 +852,18 @@
             </section>
         @endif
 
-        {{-- 5. Galeri Prewedding --}}
-        <section class="card reveal-on-scroll" aria-label="Galeri">
-            <div class="card__body">
-                <p class="sec-eyebrow">Momen Bahagia</p>
-                <h2 class="sec-title">Galeri Prewedding</h2>
-                <div class="gold-divider" aria-hidden="true">&#10047;</div>
-                <p class="story-text" style="font-size: .88rem; opacity: .85;">Setiap detik bersamamu adalah kenangan yang ingin kuabadikan selamanya.</p>
+        {{-- 5. Galeri Prewedding — hanya muncul bila pasangan punya foto. --}}
+        @if ($galleryImages !== [])
+            <section class="card reveal-on-scroll" aria-label="Galeri">
+                <div class="card__body">
+                    <p class="sec-eyebrow">Momen Bahagia</p>
+                    <h2 class="sec-title">Galeri Prewedding</h2>
+                    <div class="gold-divider" aria-hidden="true">&#10047;</div>
 
-                <div class="gallery-grid">
-                    @foreach ($galleryImages as $index => $gImg)
-                        <div class="gallery-item">
-                            <img src="{{ $gImg }}" alt="Galeri prewedding {{ $index + 1 }}" loading="lazy" width="600" height="400">
-                        </div>
-                    @endforeach
+                    @include('invitations.partials.gallery', ['galleryImages' => $galleryImages])
                 </div>
-            </div>
-        </section>
+            </section>
+        @endif
 
         {{-- 6. Simpan Undangan / QR Code --}}
         <section class="card reveal-on-scroll" aria-label="Kode undangan">

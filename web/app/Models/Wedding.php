@@ -19,10 +19,16 @@ class Wedding extends Model
     /** @use HasFactory<WeddingFactory> */
     use HasFactory, HasUuids;
 
+    public const PHOTO_DISPLAY_PREWEDDING = 'prewedding';
+
+    public const PHOTO_DISPLAY_MONOGRAM = 'monogram';
+
     protected $fillable = [
         'owner_user_id',
         'slug',
         'internal_title',
+        'photo_display',
+        'cover_media_asset_id',
         'lifecycle_status',
         'showcase_enabled',
         'showcase_enabled_at',
@@ -112,6 +118,23 @@ class Wedding extends Model
     public function mediaAlbums(): HasMany
     {
         return $this->hasMany(MediaAlbum::class);
+    }
+
+    /**
+     * The photo the couple picked for the opening section of the invitation.
+     */
+    public function coverPhoto(): BelongsTo
+    {
+        return $this->belongsTo(MediaAsset::class, 'cover_media_asset_id');
+    }
+
+    /**
+     * A couple without pre-wedding photos can ask for a monogram instead; the
+     * invitation then never shows imagery at all.
+     */
+    public function showsPreWeddingPhotos(): bool
+    {
+        return $this->photo_display !== self::PHOTO_DISPLAY_MONOGRAM;
     }
 
     public function archives(): HasMany

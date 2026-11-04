@@ -11,6 +11,11 @@ use App\Models\InvitationTemplate;
  * (docs/DATABASE_SCHEMA.md, section 4), so the colours that draw a card belong
  * here instead of a database column: a new renderer ships with its own entry and
  * a design never depends on an uploaded image to be recognisable.
+ *
+ * `cover` selects the miniature art direction drawn by
+ * `templates/partials/mini-cover.blade.php`; the palette and type stack are
+ * written as inline custom properties so the card can be a faithful, quiet
+ * reduction of the real renderer instead of one generic layout in a new colour.
  */
 final class TemplatePresentation
 {
@@ -49,101 +54,146 @@ final class TemplatePresentation
     ];
 
     /**
-     * Card palettes keyed by template slug. `frame`, `accent` and `font` draw the
-     * miniature invitation; `swatch` is the gradient band above it. The swatch is
-     * a literal Tailwind class so the scanner can compile the hex stops from here.
+     * Card art direction per template slug.
      *
-     * @var array<string, array{frame: string, accent: string, font: string, swatch: string}>
+     * - cover: miniature variant drawn by the mini-cover partial.
+     * - paper/ink/accent/line: the renderer's own palette, not an invented one.
+     * - display: the type family the real renderer uses for the couple's names.
+     * - script: set only when the design genuinely writes the names in script.
+     *
+     * @var array<string, array{cover: string, paper: string, ink: string, accent: string, line: string, display: string, script: string}>
      */
-    private const CARD_THEMES = [
+    private const CARD_ART = [
         'classic-ivory' => [
-            'frame' => 'border-[#e4dbc9] bg-[#fbf8f1] text-[#3a352d]',
-            'accent' => 'text-[#a98b5f]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#fbf8f1] via-[#e4dbc9] to-[#a98b5f]',
+            'cover' => 'frame',
+            'paper' => '#FBF8F1',
+            'ink' => '#3A352D',
+            'accent' => '#A98B5F',
+            'line' => '#E4DBC9',
+            'display' => "'Playfair Display', Georgia, serif",
+            'script' => '',
         ],
         'modern-editorial' => [
-            'frame' => 'border-stone-900 bg-white text-stone-900',
-            'accent' => 'text-stone-500',
-            'font' => 'font-sans',
-            'swatch' => 'bg-linear-to-br from-white via-stone-200 to-stone-900',
+            'cover' => 'editorial',
+            'paper' => '#FFFFFF',
+            'ink' => '#171717',
+            'accent' => '#A4402A',
+            'line' => '#E5E5E5',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => '',
         ],
         'garden-botanical' => [
-            'frame' => 'border-[#b7c9a8] bg-[#eef2e6] text-[#2f3b2f]',
-            'accent' => 'text-[#5b7553]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#eef2e6] via-[#b7c9a8] to-[#5b7553]',
+            'cover' => 'botanical',
+            'paper' => '#F1F3E8',
+            'ink' => '#2F3B2F',
+            'accent' => '#5B7553',
+            'line' => '#C3CEB4',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => '',
         ],
         'emerald-gilded' => [
-            'frame' => 'border-[#c8a96a] bg-[#04231b] text-[#f3ecdc]',
-            'accent' => 'text-[#c8a96a]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#04231b] via-[#0b4334] to-[#c8a96a]',
+            'cover' => 'gilt',
+            'paper' => '#04231B',
+            'ink' => '#F3ECDC',
+            'accent' => '#C8A96A',
+            'line' => '#C8A96A',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => "'Great Vibes', cursive",
         ],
         'sage-keepsake' => [
-            'frame' => 'border-[#7e9474] bg-[#a9b79e] text-[#2f2b25]',
-            'accent' => 'text-[#34524a]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#dfe6d6] via-[#a9b79e] to-[#34524a]',
+            'cover' => 'keepsake',
+            'paper' => '#F8F3E8',
+            'ink' => '#2F2B25',
+            'accent' => '#7E9474',
+            'line' => '#C9B898',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => "'Alex Brush', cursive",
         ],
         'batik-pusaka' => [
-            'frame' => 'border-[#c9a227] bg-[#3d1216] text-[#f7efdf]',
-            'accent' => 'text-[#e6c98a]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#3d1216] via-[#6b1f22] to-[#c9a227]',
+            'cover' => 'heritage',
+            'paper' => '#3D1216',
+            'ink' => '#F7EFDF',
+            'accent' => '#E6C98A',
+            'line' => '#8E6A2A',
+            'display' => "'Playfair Display', Georgia, serif",
+            'script' => '',
         ],
         'midnight-celestial' => [
-            'frame' => 'border-[#e3c9a0] bg-[#080d1c] text-[#f6f1e6]',
-            'accent' => 'text-[#e3c9a0]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#080d1c] via-[#1b2652] to-[#e3c9a0]',
+            'cover' => 'celestial',
+            'paper' => '#080D1C',
+            'ink' => '#F6F1E6',
+            'accent' => '#E3C9A0',
+            'line' => '#26304F',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => "'Great Vibes', cursive",
         ],
         'terracotta-sunset' => [
-            'frame' => 'border-[#b4552f] bg-[#f7ecdc] text-[#33201a]',
-            'accent' => 'text-[#b4552f]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#f7ecdc] via-[#e79a5c] to-[#b4552f]',
+            'cover' => 'sunset',
+            'paper' => '#F7ECDC',
+            'ink' => '#33201A',
+            'accent' => '#B4552F',
+            'line' => '#E0BFA0',
+            'display' => "'Playfair Display', Georgia, serif",
+            'script' => '',
         ],
         'glasshouse-minimal' => [
-            'frame' => 'border-[#c7ccc4] bg-[#f7f6f1] text-[#1d211e]',
-            'accent' => 'text-[#63776a]',
-            'font' => 'font-sans',
-            'swatch' => 'bg-linear-to-br from-[#f7f6f1] via-[#dfe4dc] to-[#63776a]',
+            'cover' => 'window',
+            'paper' => '#F7F6F1',
+            'ink' => '#1D211E',
+            'accent' => '#63776A',
+            'line' => '#C7CCC4',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => '',
         ],
         'pesisir-senja' => [
-            'frame' => 'border-[#8fb4b8] bg-[#eef6f5] text-[#123033]',
-            'accent' => 'text-[#2c6f74]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#eef6f5] via-[#9cc6c9] to-[#e0a06a]',
+            'cover' => 'coastal',
+            'paper' => '#EEF6F5',
+            'ink' => '#123033',
+            'accent' => '#2C6F74',
+            'line' => '#9CC6C9',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => '',
         ],
         'songket-empress' => [
-            'frame' => 'border-[#d8b457] bg-[#fdf6e4] text-[#4a3312]',
-            'accent' => 'text-[#a4761f]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#fdf6e4] via-[#ecd28a] to-[#a4761f]',
+            'cover' => 'songket',
+            'paper' => '#FDF6E4',
+            'ink' => '#4A3312',
+            'accent' => '#A4761F',
+            'line' => '#D8B457',
+            'display' => "'Playfair Display', Georgia, serif",
+            'script' => '',
         ],
         'velvet-royal' => [
-            'frame' => 'border-[#c9a24b] bg-[#2c0f26] text-[#f8ecf4]',
-            'accent' => 'text-[#c9a24b]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#2c0f26] via-[#5a1f47] to-[#c9a24b]',
+            'cover' => 'royal',
+            'paper' => '#2C0F26',
+            'ink' => '#F8ECF4',
+            'accent' => '#C9A24B',
+            'line' => '#6B3B58',
+            'display' => "'Cormorant Garamond', Georgia, serif",
+            'script' => '',
         ],
         'deco-noir' => [
-            'frame' => 'border-[#cbb27a] bg-[#111114] text-[#f2ead6]',
-            'accent' => 'text-[#cbb27a]',
-            'font' => 'font-serif',
-            'swatch' => 'bg-linear-to-br from-[#111114] via-[#3a3630] to-[#cbb27a]',
+            'cover' => 'deco',
+            'paper' => '#111114',
+            'ink' => '#F2EAD6',
+            'accent' => '#CBB27A',
+            'line' => '#3A3630',
+            'display' => "'Cinzel', Georgia, serif",
+            'script' => '',
         ],
     ];
 
     /**
-     * @var array{frame: string, accent: string, font: string, swatch: string}
+     * @var array{cover: string, paper: string, ink: string, accent: string, line: string, display: string, script: string}
      */
-    private const FALLBACK_THEME = [
-        'frame' => 'border-stone-300 bg-white text-stone-900',
-        'accent' => 'text-stone-500',
-        'font' => 'font-serif',
-        'swatch' => 'bg-linear-to-br from-stone-50 via-stone-200 to-stone-400',
+    private const FALLBACK_ART = [
+        'cover' => 'frame',
+        'paper' => '#FFFFFF',
+        'ink' => '#1C1917',
+        'accent' => '#9F1239',
+        'line' => '#E7E5E4',
+        'display' => "'Playfair Display', Georgia, serif",
+        'script' => '',
     ];
 
     public static function categoryLabel(?string $category): string
@@ -163,10 +213,10 @@ final class TemplatePresentation
     }
 
     /**
-     * @return array{frame: string, accent: string, font: string, swatch: string}
+     * @return array{cover: string, paper: string, ink: string, accent: string, line: string, display: string, script: string}
      */
-    public static function cardTheme(InvitationTemplate $template): array
+    public static function card(InvitationTemplate $template): array
     {
-        return self::CARD_THEMES[$template->slug] ?? self::FALLBACK_THEME;
+        return self::CARD_ART[$template->slug] ?? self::FALLBACK_ART;
     }
 }

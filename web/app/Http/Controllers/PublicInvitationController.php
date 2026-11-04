@@ -8,6 +8,7 @@ use App\Actions\Analytics\TrackEvent;
 use App\Data\PublicInvitation;
 use App\Models\AnalyticsEvent;
 use App\Models\Wedding;
+use App\Support\Invitations\InvitationMedia;
 use App\Support\Templates\TemplateRegistry;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -58,13 +59,18 @@ final class PublicInvitationController extends Controller
 
         $track->handle(AnalyticsEvent::INVITATION_VIEWED, $wedding, ['surface' => 'public']);
 
+        // One query answers both questions: the photos a guest sees and whether
+        // the gallery link is worth showing at all.
+        $media = InvitationMedia::for($invitation, false, $wedding);
+
         return view($view, [
             'invitation' => $invitation,
             'preview' => false,
             'guest' => null,
             'rsvp' => null,
             'token' => null,
-            'hasGallery' => $wedding->hasPublicGallery(),
+            'media' => $media,
+            'hasGallery' => $media->gallery() !== [],
             'galleryUrl' => route('invitations.gallery', ['slug' => $wedding->slug]),
         ]);
     }

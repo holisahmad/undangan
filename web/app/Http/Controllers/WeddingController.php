@@ -6,20 +6,24 @@ namespace App\Http\Controllers;
 
 use App\Actions\Weddings\CreateWedding;
 use App\Actions\Weddings\UpdateWedding;
+use App\Enums\AlbumVisibility;
 use App\Http\Requests\StoreWeddingRequest;
 use App\Http\Requests\UpdateWeddingRequest;
 use App\Models\InvitationTemplate;
+use App\Models\MediaAsset;
 use App\Models\TemplateVersion;
 use App\Models\Wedding;
 use App\Support\Billing\TemplateAccess;
 use App\Support\Guests\RsvpSummary;
 use App\Support\Invitations\InvitationCopy;
 use App\Support\Media\MediaQuota;
+use App\Support\Media\UploadLimits;
 use App\Support\Templates\TemplatePresentation;
 use App\Support\Templates\TemplateRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 final class WeddingController extends Controller
@@ -111,6 +115,9 @@ final class WeddingController extends Controller
             'entitlement' => $wedding->activeInvitationEntitlement(),
             'templates' => $templates,
             'locked' => $locked,
+            'photoDisplay' => $wedding->photo_display ?? Wedding::PHOTO_DISPLAY_PREWEDDING,
+            'coverId' => $wedding->cover_media_asset_id,
+            ...$this->invitationPhotos($wedding),
         ]);
     }
 
@@ -122,6 +129,36 @@ final class WeddingController extends Controller
         $updateWedding->handle($wedding, $request->string('internal_title')->toString());
 
         return back()->with('status', 'Data undangan diperbarui.');
+    }
+
+    /**
+     * Photos the couple may show inside the invitation: ready assets in their
+     * public albums, newest first, each with a signed thumbnail for the picker.
+     *
+     * @return array{photos: Collection<int, MediaAsset>, photoThumbUrls: array<string, string>, limits: UploadLimits}
+     */
+    private function invitationPhotos(Wedding $wedding): array
+    {
+        $photos = $wedding->mediaAssets()
+            ->ready()
+            ->whereHas('album', static fn ($album) => $album->where('visibility', AlbumVisibility::Public))
+            ->latest()
+            ->limit(12)
+            ->get();
+
+        $ttl = (int) config('platform.media.signed_url_ttl_minutes', 15);
+
+        return [
+            'photos' => $photos,
+            'photoThumbUrls' => $photos->mapWithKeys(static fn (MediaAsset $asset): array => [
+                $asset->getKey() => URL::temporarySignedRoute(
+                    'media.photos.download',
+                    now()->addMinutes($ttl),
+                    ['mediaAsset' => $asset->getKey(), 'variant' => 'thumb'],
+                ),
+            ])->all(),
+            'limits' => UploadLimits::current(),
+        ];
     }
 
     /**

@@ -35,9 +35,10 @@
                         <ul class="pw-gift__list">
                             @foreach ($accounts as $account)
                                 <li class="pw-gift__card">
-                                    {{-- Realistic ATM Card Visual (Inviee.id style) --}}
+                                    {{-- Chip and contactless mark are drawn in CSS: a
+                                         real invitation never loads demo artwork. --}}
                                     <div class="pw-gift__card-chip">
-                                        <img src="{{ asset('images/demo/chip-atm.webp') }}" alt="Chip" width="40" height="30" class="pw-gift__chip-img" onerror="this.style.display='none'">
+                                        <span class="pw-gift__chip" aria-hidden="true"></span>
                                         <span class="pw-gift__contactless" aria-hidden="true">
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M8.5 16.5a5 5 0 0 1 0-7"></path>
@@ -180,10 +181,25 @@
             justify-content: space-between;
             margin-bottom: .8rem;
         }
-        .pw-gift__chip-img {
+        .pw-gift__chip {
             display: block;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+            width: 38px;
+            height: 28px;
+            border-radius: 5px;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .12)),
+                var(--pw-accent, #c8a96a);
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18);
+            opacity: .8;
+        }
+        .pw-gift__chip::before {
+            content: "";
+            display: block;
+            height: 100%;
+            background:
+                linear-gradient(90deg, transparent 46%, rgba(0, 0, 0, .22) 46% 54%, transparent 54%),
+                linear-gradient(180deg, transparent 46%, rgba(0, 0, 0, .22) 46% 54%, transparent 54%);
+            border-radius: inherit;
         }
         .pw-gift__contactless {
             opacity: .6;

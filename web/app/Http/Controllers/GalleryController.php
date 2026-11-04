@@ -121,6 +121,9 @@ final class GalleryController extends Controller
     {
         $this->authorize('update', $wedding);
 
+        // Route model binding alone would accept another wedding's photo ID.
+        abort_unless($mediaAsset->wedding_id === $wedding->getKey(), 404);
+
         $delete->handle($mediaAsset, $request->user());
 
         return back()->with('status', 'Foto dihapus.');

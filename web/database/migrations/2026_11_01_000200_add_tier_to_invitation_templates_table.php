@@ -30,7 +30,7 @@ return new class extends Migration
 
             try {
                 $table->index(['status', 'tier', 'sort_order'], 'invitation_templates_catalog_index');
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 // Index may already exist
             }
         });
@@ -41,7 +41,7 @@ return new class extends Migration
         Schema::table('invitation_templates', function (Blueprint $table) {
             try {
                 $table->dropIndex('invitation_templates_catalog_index');
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
             $table->dropColumn(['tier', 'badge', 'sort_order']);
         });

@@ -304,6 +304,113 @@
                     </div>
                 </form>
             </section>
+
+            <section id="foto-prewedding" class="rounded-lg border border-stone-200 bg-white p-5">
+                <h2 class="font-serif text-lg font-semibold">Foto pre-wedding</h2>
+                <p class="mt-1 text-sm text-stone-600">
+                    Foto Anda sendiri menggantikan gambar contoh pada tema. Tanpa foto, undangan memakai monogram
+                    inisial kedua mempelai.
+                </p>
+
+                <form method="POST" action="{{ route('weddings.photos.display', $wedding) }}" class="mt-4 space-y-3">
+                    @csrf
+                    @method('PATCH')
+
+                    <fieldset class="space-y-2">
+                        <legend class="{{ $labelClass }}">Tampilan undangan</legend>
+
+                        <label class="flex items-start gap-2 text-sm">
+                            <input type="radio" name="photo_display"
+                                   value="{{ \App\Models\Wedding::PHOTO_DISPLAY_PREWEDDING }}"
+                                   @checked($photoDisplay !== \App\Models\Wedding::PHOTO_DISPLAY_MONOGRAM)
+                                   class="mt-0.5 border-stone-300 text-rose-800 focus:ring-rose-700">
+                            <span>
+                                <span class="font-medium">Pakai foto pre-wedding</span><br>
+                                <span class="text-xs text-stone-500">Foto sampul tampil di bagian pembuka undangan.</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-2 text-sm">
+                            <input type="radio" name="photo_display"
+                                   value="{{ \App\Models\Wedding::PHOTO_DISPLAY_MONOGRAM }}"
+                                   @checked($photoDisplay === \App\Models\Wedding::PHOTO_DISPLAY_MONOGRAM)
+                                   class="mt-0.5 border-stone-300 text-rose-800 focus:ring-rose-700">
+                            <span>
+                                <span class="font-medium">Tanpa foto &mdash; monogram inisial</span><br>
+                                <span class="text-xs text-stone-500">Untuk yang belum punya foto pre-wedding.</span>
+                            </span>
+                        </label>
+                    </fieldset>
+
+                    <button type="submit" class="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50">
+                        Simpan pilihan
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ route('weddings.photos.store', $wedding) }}"
+                      enctype="multipart/form-data" class="mt-5 space-y-3 border-t border-stone-100 pt-5">
+                    @csrf
+
+                    <div>
+                        <label for="photos" class="{{ $labelClass }}">Unggah foto (JPG, PNG, WebP)</label>
+                        <input id="photos" name="photos[]" type="file" multiple required
+                               accept="image/jpeg,image/png,image/webp"
+                               class="mt-1 block w-full text-sm text-stone-600 file:mr-3 file:rounded-md file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-stone-700 hover:file:bg-stone-200">
+                        <p class="mt-1 text-xs text-stone-500">
+                            Maksimal {{ $limits->maxFiles() }} foto sekali unggah, {{ $limits->fileMb() }} MB per foto.
+                            Foto masuk album &ldquo;Prewedding&rdquo; pada galeri undangan ini.
+                        </p>
+                        @error('photos')
+                            <p class="mt-1 text-xs text-rose-800">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="rounded-md bg-rose-800 px-4 py-2 text-sm font-medium text-white hover:bg-rose-900">
+                        Unggah foto
+                    </button>
+                </form>
+
+                @if ($photos->isNotEmpty())
+                    <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        @foreach ($photos as $photo)
+                            @php $isCover = $photo->getKey() === $coverId; @endphp
+                            <figure class="overflow-hidden rounded-md border {{ $isCover ? 'border-rose-700 ring-1 ring-rose-700' : 'border-stone-200' }}">
+                                <img src="{{ $photoThumbUrls[$photo->getKey()] }}" alt="Foto pre-wedding"
+                                     width="400" height="400" loading="lazy" decoding="async"
+                                     class="h-28 w-full object-cover">
+                                <figcaption class="space-y-1 p-2">
+                                    @if ($isCover)
+                                        <p class="text-xs font-medium text-rose-800">Sampul undangan</p>
+                                    @else
+                                        <form method="POST" action="{{ route('weddings.photos.cover', [$wedding, $photo]) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-xs text-stone-600 hover:underline">Jadikan sampul</button>
+                                        </form>
+                                    @endif
+
+                                    <form method="POST" action="{{ route('weddings.gallery.photos.destroy', [$wedding, $photo]) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-xs text-stone-500 hover:text-rose-800">Hapus</button>
+                                    </form>
+                                </figcaption>
+                            </figure>
+                        @endforeach
+                    </div>
+
+                    @if ($photoDisplay === \App\Models\Wedding::PHOTO_DISPLAY_MONOGRAM)
+                        <p class="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                            Foto tersimpan, tetapi undangan sedang memakai monogram. Pilih &ldquo;Pakai foto pre-wedding&rdquo;
+                            lalu simpan untuk menampilkannya.
+                        </p>
+                    @endif
+                @else
+                    <p class="mt-4 rounded-md bg-stone-50 px-3 py-2 text-xs leading-relaxed text-stone-600">
+                        Belum ada foto. Undangan memakai monogram inisial sampai Anda mengunggah foto.
+                    </p>
+                @endif
+            </section>
         </div>
 
         <aside class="space-y-6">

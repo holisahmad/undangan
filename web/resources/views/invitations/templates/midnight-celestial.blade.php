@@ -29,16 +29,19 @@
     $recipient = (isset($guest) && $guest !== null ? $guest->display_name : null) ?: request('to');
 
     // Default aesthetic prewedding imagery
-    $heroImage = asset('images/demo/couple-hero.webp');
-    $brideImage = asset('images/demo/bride.webp');
-    $groomImage = asset('images/demo/groom.webp');
-    $flowerDecor = asset('images/demo/flower-decor.webp');
-    $galleryImages = [
-        asset('images/demo/gallery-1.webp'),
-        asset('images/demo/gallery-2.webp'),
-        asset('images/demo/gallery-3.webp'),
-        asset('images/demo/gallery-4.webp'),
-    ];
+    // Photos come from the couple's own public albums, or the demo set on a
+    // sample page. A real invitation never borrows stock photography.
+    $media ??= \App\Support\Invitations\InvitationMedia::for($invitation, $demo ?? false);
+    $heroImage = $media->hero();
+    $brideImage = $media->portrait('bride');
+    $groomImage = $media->portrait('groom');
+    $galleryImages = $media->gallery();
+    $monogram = collect($invitation->couple)
+        ->map(static fn (array $person): string => trim((string) ($person['nickname'] ?? $person['display_name'] ?? '')))
+        ->filter()
+        ->map(static fn (string $name): string => mb_strtoupper(mb_substr($name, 0, 1)))
+        ->take(2)
+        ->implode('·');
 @endphp
 <!DOCTYPE html>
 <html lang="id" data-template="midnight-celestial.v1">
@@ -663,9 +666,7 @@
                 @endforelse
             </h1>
 
-            <div class="hero-arch">
-                <img src="{{ $heroImage }}" alt="Foto Mempelai" width="400" height="520">
-            </div>
+            @include('invitations.partials.photo', ['src' => $heroImage, 'class' => 'hero-arch', 'alt' => 'Foto mempelai', 'initial' => $monogram])
 
             @if ($date !== null)
                 <p class="lead__date">{{ $date->copy()->locale('id')->translatedFormat('l, d F Y') }}</p>
@@ -705,9 +706,7 @@
                         @endphp
 
                         <article class="person-card">
-                            <div class="person-arch">
-                                <img src="{{ $photo }}" alt="{{ $person['display_name'] ?? 'Mempelai' }}" width="300" height="400">
-                            </div>
+                            @include('invitations.partials.photo', ['src' => $photo, 'class' => 'person-arch', 'alt' => $person['display_name'] ?? 'Mempelai', 'initial' => $monogram, 'size' => ['width' => 300, 'height' => 400]])
 
                             <p class="person__role">
                                 {{ $person['type'] === 'groom' ? 'Mempelai Pria' : ($person['type'] === 'bride' ? 'Mempelai Wanita' : 'Mempelai') }}
@@ -812,20 +811,16 @@
             </section>
         @endif
 
-        {{-- 5. Galeri Foto Prewedding --}}
-        <section class="soft-section reveal-on-scroll" aria-label="Galeri">
-            <p class="sec-kicker">Dokumentasi</p>
-            <h2 class="sec-title">Momen Bahagia</h2>
-            <div class="ethereal-divider" aria-hidden="true">&#10022;</div>
+        {{-- 5. Galeri Foto Prewedding — hanya bila ada foto sungguhan. --}}
+        @if ($galleryImages !== [])
+            <section class="soft-section reveal-on-scroll" aria-label="Galeri">
+                <p class="sec-kicker">Dokumentasi</p>
+                <h2 class="sec-title">Momen Bahagia</h2>
+                <div class="ethereal-divider" aria-hidden="true">&#10022;</div>
 
-            <div class="gallery-grid">
-                @foreach ($galleryImages as $index => $gImg)
-                    <div class="gallery-item">
-                        <img src="{{ $gImg }}" alt="Galeri prewedding {{ $index + 1 }}" loading="lazy" width="600" height="400">
-                    </div>
-                @endforeach
-            </div>
-        </section>
+                @include('invitations.partials.gallery', ['galleryImages' => $galleryImages])
+            </section>
+        @endif
 
         {{-- Power Kit (Countdown, Hadiah ATM Card, Wishes, Music, Floating Nav) --}}
         @include('invitations.partials.power')

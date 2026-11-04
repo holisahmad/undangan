@@ -88,7 +88,7 @@
                         @foreach ($templates as $index => $version)
                             @php
                                 $template = $version->template;
-                                $theme = App\Support\Templates\TemplatePresentation::cardTheme($template);
+                                $theme = App\Support\Templates\TemplatePresentation::card($template);
                                 $badge = App\Support\Templates\TemplatePresentation::badgeLabel($template->badge);
                                 $tierLabel = App\Support\Templates\TemplatePresentation::tierLabel($template->tier);
                                 $categoryKey = strtolower($template->category ?? '');
@@ -101,7 +101,8 @@
                             <label class="template-select-card group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white p-3.5 shadow-sm transition-all duration-200 hover:border-rose-400 hover:shadow-md cursor-pointer has-[:checked]:border-rose-700 has-[:checked]:ring-2 has-[:checked]:ring-rose-200 has-[:checked]:bg-rose-50/20"
                                    data-category="{{ $categoryKey }}">
                                 {{-- Theme Color Header --}}
-                                <div class="absolute inset-x-0 top-0 h-1.5 {{ $theme['swatch'] }}"></div>
+                                <div class="absolute inset-x-0 top-0 h-1.5"
+                                     style="background: linear-gradient(90deg, {{ $theme['paper'] }}, {{ $theme['accent'] }})"></div>
 
                                 <div>
                                     <div class="flex items-start justify-between gap-2 pt-1">
